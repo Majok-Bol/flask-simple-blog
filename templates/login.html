@@ -1,15 +1,38 @@
-{% extends 'base.html' %} {% block title%}
+{% extends 'base_plain.html' %} {% block title%}
 <title>Register page</title>
-{% endblock %}
- {% block body %}
-<div>
-  <form method="post">
-    <div>
+{% endblock %} {% block body %}
+<div class="flex flex-col items-center justify-center min-h-screen">
+  <form
+    method="post"
+    class="flex flex-col items-center justify-center w-[500px] h-[400px] shadow-2xl bg-gray-300 rounded-[8px] pt-2 border border-gray-400"
+  >
+    <div class="flex flex-col items-center justify-center">
       {{form.hidden_tag()}}
-      <div>{{form.username.label}}{{form.username()}}</div>
-      <div>{{form.password.label}}{{form.password()}}</div>
-      <div>{{form.submit()}}</div>
+      <div class="flex flex-col items-center justify-center m-1">
+        {{form.username.label}}{{form.username(class='border border-gray-400
+        outline:none focus:outline-none focus:ring-2 focus:ring-blue-400
+        rounded-[6px] p-1 m-1',placeholder='Enter your name')}}
+      </div>
+      <div class="flex flex-col items-center justify-center m-1">
+        {{form.password.label}}{{form.password(class='border border-gray-400
+        outline:none focus:outline-none focus:ring-2 focus:ring-blue-400
+        rounded-[6px] p-1 m-1')}}
+      </div>
+
+      <div class="flex flex-col items-center justify-center m-1">
+        {{form.submit( class='cursor-pointer bg-green-600 text-white w-60
+        h-[30px] rounded-[20px]')}}
+      </div>
     </div>
   </form>
+  <p>
+    Dont have an account?
+    <a
+      href="{{url_for('register')}}"
+      class="cursor-pointer hover:text-blue-400 hover:underline"
+      >Register</a
+    >
+  </p>
 </div>
-{% endblock %} 
+
+{% endblock %}
