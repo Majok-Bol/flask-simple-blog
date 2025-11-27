@@ -7,13 +7,15 @@ from dotenv import load_dotenv
 #import csrf protet
 from flask_wtf import CSRFProtect
 from flask_sqlalchemy import SQLAlchemy
+from flask_bcrypt import Bcrypt
 import os
 #initialize app with flask
 app=Flask(__name__)
 #initialize app with csrf protect
 csrf=CSRFProtect()
 csrf.init_app(app)
-
+#initialize app with bcrypt for hashing password
+bcrypt=Bcrypt(app)
 #load env files
 load_dotenv('.env')
 #use secret key
@@ -32,6 +34,7 @@ login_manager.init_app(app)
 #always redirect to login page
 #if user is not logged in
 login_manager.login_view='login'
+login_manager.login_message_category='info'
 #handle root url
 @app.route('/')
 @app.route('/home',methods=['POST','GET'])
@@ -43,9 +46,23 @@ def home():
 def register():
     form=RegisterForm()
     if form.validate_on_submit():
+        #check if username and email already exist
+        username=User.query.filter_by(username=form.username.data).first()
+        email=User.query.filter_by(email=form.email.data).first()
+        if username:
+            # flash('User already exists','danger')
+            form.username.errors.append('User already exists')
+            return render_template('register.html',form=form)
+        if email:
+            # flash('Email already registed.Please try another email','danger')
+            form.email.errors.append('Email already registered.Please try another email')
+            return render_template('register.html',form=form)
         #get user details
+        #hash use password
+        #decode as string
+        hashed_password=bcrypt.generate_password_hash(form.password.data).decode('utf-8')
         #add user to database
-        user=User(username=form.username.data,email=form.email.data,password=form.password.data)
+        user=User(username=form.username.data,email=form.email.data,password=hashed_password)
         db.session.add(user)
         db.session.commit()
         flash('Account created successfully','success')
@@ -60,11 +77,16 @@ def login():
     if form.validate_on_submit():
         #get user from the database
         existing_user=User.query.filter_by(username=form.username.data).first()
+        #if user not found
+        #show error
         if existing_user is None:
-            #if user does not exist
-            #try login again
-           return render_template('login.html',form=form)
-        #else login user
+            form.username.errors.append('Username not found.Please check your username')
+            return render_template('login.html',form=form)
+        if not bcrypt.check_password_hash(existing_user.password,form.password.data):
+            form.password.errors.append('Passwords is incorrect.Please try again')
+            return render_template('login.html',form=form)
+        #login user
+        #when username and password is correct
         login_user(existing_user)
         flash('login successful','success')
         #redirect to the dashboard
@@ -80,10 +102,17 @@ def dashboard():
 @login_manager.user_loader
 def load_user(user_id):
     #fetch current user 
-    return db.session.get(User,user_id)
+    return User.query.get(user_id)
+#logout user
+@app.route('/logout',methods=['POST','GET'])
+@login_required
+def logout():
+    logout_user()
+    flash('You have been logged out','warning')
+    return redirect(url_for('login'))
 #create user model
 class User(db.Model,UserMixin):
-    id=db.Column(db.String(36),primary_key=True)
+    id=db.Column(db.Integer,primary_key=True)
     username=db.Column(db.String(36),nullable=False)
     email=db.Column(db.String(50),nullable=False)
     password=db.Column(db.String(255),nullable=False)

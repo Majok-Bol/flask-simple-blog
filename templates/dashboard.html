@@ -4,8 +4,9 @@
 {%endblock%}
 {%block body%}
 {% if current_user.is_authenticated%}
-<p>Welcome {{current_user.username}} to your dashboard</p>
+<p>Welcome <strong>{{current_user.username}}</strong> to your dashboard</p>
 {%else%}
 <p>You are not logged in</p>
 {%endif%}
+<a href="{{url_for('logout')}}" class="text-blue-800 underline hover:text-blue-400">Logout</a>
 {%endblock%}

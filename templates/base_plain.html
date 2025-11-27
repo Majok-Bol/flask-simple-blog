@@ -7,6 +7,29 @@
     <script src="https://cdn.tailwindcss.com"></script>
   </head>
   <body class="min-h-screen">
-    <main class="min-h-screen">{%block body%}{%endblock%}</main>
+    <main class="min-h-screen">
+        <div>
+        {%with messages=get_flashed_messages(with_categories=true)%} {%if
+        messages%} {%for category,message in messages%}
+        <div
+          class="{%if category=='success'%}
+           text-green-600
+            {%elif category=='info'%} 
+            text-blue-700 
+            {%elif category=='warning'%} 
+            text-yellow-400
+            {%else%}
+            text-gray-500
+            {%endif%} 
+         "
+        >
+          {{message}}
+        </div>
+        {%endfor%}
+        {%endif%}
+        {%endwith%}
+      </div>
+      
+      {%block body%}{%endblock%}</main>
   </body>
 </html>
