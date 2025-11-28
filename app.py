@@ -2,12 +2,17 @@
 from flask import Flask,render_template,url_for,redirect,flash
 from flask_login import login_manager,login_required,LoginManager,logout_user,UserMixin,current_user,login_user
 #import register,login forms
-from forms import RegisterForm,LoginForm
+# from forms import RegisterForm,LoginForm,User
 from dotenv import load_dotenv
 #import csrf protet
 from flask_wtf import CSRFProtect
 from flask_sqlalchemy import SQLAlchemy
 from flask_bcrypt import Bcrypt
+#import form fields 
+from wtforms import StringField,BooleanField,EmailField,PasswordField,SubmitField
+#import validators for form input
+from wtforms.validators import InputRequired,EqualTo,Email,Length
+from flask_wtf import FlaskForm
 import os
 #initialize app with flask
 app=Flask(__name__)
@@ -46,17 +51,6 @@ def home():
 def register():
     form=RegisterForm()
     if form.validate_on_submit():
-        #check if username and email already exist
-        username=User.query.filter_by(username=form.username.data).first()
-        email=User.query.filter_by(email=form.email.data).first()
-        if username:
-            # flash('User already exists','danger')
-            form.username.errors.append('User already exists')
-            return render_template('register.html',form=form)
-        if email:
-            # flash('Email already registed.Please try another email','danger')
-            form.email.errors.append('Email already registered.Please try another email')
-            return render_template('register.html',form=form)
         #get user details
         #hash use password
         #decode as string
@@ -110,13 +104,44 @@ def logout():
     logout_user()
     flash('You have been logged out','warning')
     return redirect(url_for('login'))
+
+
+
+#registration form
+class RegisterForm(FlaskForm):
+    username=StringField('Username',validators=[InputRequired(),Length(min=4,max=50)])
+    email=EmailField('Email address',validators=[InputRequired(),Email(),Length(max=50)])
+    password=PasswordField('Password',validators=[InputRequired(),Length(min=8,max=255)])
+    confirm_password=PasswordField('Confirm password',validators=[InputRequired(),Length(min=8,max=255),EqualTo('password',message='Passwords must match')])
+    submit=SubmitField('Register')
+          #check if username and email already exist
+    def check_user(self,username):
+     username=User.query.filter_by(username=form.username.data).first()
+     if username:
+        raise ValidationError('User already exists.')
+    # # flash('User already exists','danger')
+    #   form.username.errors.append('User already exists')
+    #   return render_template('register.html',form=form)
+    def check_email(self,email):
+      email=User.query.filter_by(email=form.email.data).first()
+      if email:
+        raise ValidationError('Email already registered.')
+      # flash('Email already registed.Please try another email','danger')
+        # form.email.errors.append('Email already registered.Please try another email')
+        # return render_template('register.html',form=form)
+
+#login form
+class LoginForm(FlaskForm):
+    username=StringField('Username',validators=[InputRequired()])
+    password=PasswordField('Password',validators=[InputRequired(),Length(min=8)])
+    remember_me=BooleanField('Remember me')
+    submit=SubmitField('Login')
 #create user model
 class User(db.Model,UserMixin):
     id=db.Column(db.Integer,primary_key=True)
     username=db.Column(db.String(36),nullable=False)
     email=db.Column(db.String(50),nullable=False)
     password=db.Column(db.String(255),nullable=False)
-
 if __name__=='__main__':
     with app.app_context():
       db.create_all()
