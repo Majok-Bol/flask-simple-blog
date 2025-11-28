@@ -1,0 +1,60 @@
+# =====================================
+# Python
+# =====================================
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+
+# SQLite / DB files
+*.db
+*.sqlite3
+
+# Instance folder (Flask config, dev DB)
+instance/
+
+# =====================================
+# Virtual Environments
+# =====================================
+venv/
+env/
+.venv/
+blog_env/
+
+# =====================================
+# Environment Variables
+# =====================================
+.env
+.env.*
+!.env.example  # keep template config if needed
+
+# =====================================
+# Node / TailwindCSS
+# =====================================
+node_modules/
+npm-debug.log*
+package-lock.json
+
+# =====================================
+# Build / Output files
+# =====================================
+# Tailwind generated output
+static/css/main.css
+static/src/output.css
+
+# Build folders
+dist/
+build/
+
+# =====================================
+# IDE / Editor
+# =====================================
+.vscode/
+.idea/
+*.swp
+
+# =====================================
+# System files
+# =====================================
+.DS_Store
+Thumbs.db

@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    {%block title%}{%endblock%}
+    <script src="https://cdn.tailwindcss.com"></script>
+  </head>
+  <body>
+    <main>
+      <nav>
+        <a
+          href="{{url_for('home')}}"
+          class="hover:text-blue-400 hover:underline cursor-pointer"
+          >Home</a
+        >
+        <a
+          href="{{url_for('dashboard')}}"
+          class="hover:text-blue-400 hover:underline cursor-pointer"
+          >Dashboard</a
+        >
+        <a href="" class="hover:text-blue-400 hover:underline cursor-pointer"
+          >Posts</a
+        >
+        <a
+          href="{{url_for('login')}}"
+          class="hover:underline hover:text-blue-400 cursor-pointer"
+          >Login</a
+        >
+        <a
+          href="{{url_for('register')}}"
+          class="hover:text-blue-400 hover:underline cursor-pointer"
+          >Register</a
+        >
+      </nav>
+      <div>
+        {%with messages=get_flashed_messages(with_categories=true)%} {%if
+        messages%} {%for category,message in messages%}
+        <div
+          class="{%if category=='success'%}
+           text-green-600
+            {%elif category=='info'%} 
+            text-blue-700 
+            {%elif category=='warning'%} 
+            text-yellow-400
+            {%else%}
+            text-gray-500
+            {%endif%} 
+         "
+        >
+          {{message}}
+        </div>
+        {%endfor%}
+        {%endif%}
+        {%endwith%}
+      </div>
+      {%block body%}{%endblock%}
+    </main>
+  </body>
+</html>

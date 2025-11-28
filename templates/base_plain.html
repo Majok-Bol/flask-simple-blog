@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    {%block title%}{%endblock%}
+    <script src="https://cdn.tailwindcss.com"></script>
+  </head>
+  <body class="min-h-screen">
+    <main class="min-h-screen">
+        <div>
+        {%with messages=get_flashed_messages(with_categories=true)%} {%if
+        messages%} {%for category,message in messages%}
+        <div
+          class="{%if category=='success'%}
+           text-green-600
+            {%elif category=='info'%} 
+            text-blue-700 
+            {%elif category=='warning'%} 
+            text-yellow-400
+            {%else%}
+            text-gray-500
+            {%endif%} 
+         "
+        >
+          {{message}}
+        </div>
+        {%endfor%}
+        {%endif%}
+        {%endwith%}
+      </div>
+      
+      {%block body%}{%endblock%}</main>
+  </body>
+</html>
