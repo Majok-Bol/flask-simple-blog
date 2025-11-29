@@ -33,28 +33,26 @@
           >Register</a
         >
       </nav>
-      <div>
+      <div class="flash">
         {%with messages=get_flashed_messages(with_categories=true)%} {%if
         messages%} {%for category,message in messages%}
         <div
-          class="{%if category=='success'%}
-           text-green-600
-            {%elif category=='info'%} 
-            text-blue-700 
-            {%elif category=='warning'%} 
-            text-yellow-400
-            {%else%}
-            text-gray-500
-            {%endif%} 
-         "
+          class=" flash {%if category=='success'%} text-green-600 {%elif category=='info'%} text-blue-700 {%elif category=='warning'%} text-yellow-400 {%else%} text-gray-500 {%endif%}"
         >
           {{message}}
         </div>
-        {%endfor%}
-        {%endif%}
-        {%endwith%}
+        {%endfor%} {%endif%} {%endwith%}
       </div>
       {%block body%}{%endblock%}
     </main>
+    <!-- <script>
+      const messages = document.querySelectorAll(".flash");
+      messages.forEach((msg) => {
+        setTimeout(() => {
+          msg.classList.add("opacity-0");
+          setTimeout(() => msg.remove(), 400);
+        }, 300);
+      });
+    </script> -->
   </body>
 </html>

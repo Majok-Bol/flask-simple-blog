@@ -16,15 +16,15 @@
         outline:none focus:outline-none focus:ring-2 focus:ring-blue-400
         rounded-[6px] p-1 m-1',placeholder='Enter your name')}}
         {%for error in form.username.errors%}
-        <p class="text-red-600">{{error}}</p>
+        <p class="flash text-red-600">{{error}}</p>
         {%endfor%}
       </div>
-      <div class="flex flex-col items-center justify-center m-1">
+      <div class="flash flex flex-col items-center justify-center m-1">
         {{form.password.label}}{{form.password(class='border border-gray-400
         outline:none focus:outline-none focus:ring-2 focus:ring-blue-400
         rounded-[6px] p-1 m-1')}}
            {%for error in form.password.errors%}
-        <p class="text-red-600">{{error}}</p>
+        <p class="flash text-red-600">{{error}}</p>
         {%endfor%}
       </div>
 <div  class="flex  items-center justify-center m-1">{{form.remember_me.label}}{{form.remember_me(class='w-10 h-4')}}</div>

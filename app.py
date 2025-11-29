@@ -1,5 +1,5 @@
 
-from flask import Flask,render_template,url_for,redirect,flash
+from flask import Flask,render_template,url_for,redirect,flash,request
 from flask_login import login_manager,login_required,LoginManager,logout_user,UserMixin,current_user,login_user
 #import register,login forms
 # from forms import RegisterForm,LoginForm,User
@@ -11,8 +11,10 @@ from flask_bcrypt import Bcrypt
 #import form fields 
 from wtforms import StringField,BooleanField,EmailField,PasswordField,SubmitField
 #import validators for form input
-from wtforms.validators import InputRequired,EqualTo,Email,Length
+from wtforms.validators import InputRequired,EqualTo,Email,Length,ValidationError
 from flask_wtf import FlaskForm
+#prevent redirect attacks
+from urllib.parse import urlparse,urljoin
 import os
 #initialize app with flask
 app=Flask(__name__)
@@ -83,7 +85,14 @@ def login():
         #when username and password is correct
         login_user(existing_user)
         flash('login successful','success')
-        #redirect to the dashboard
+        #check for redirect route
+        next_page=request.args.get('next')
+        if next_page and is_safe_url(next_page):
+            #if safe redirect
+            #go to next parameter
+            #go to that page
+            return redirect(next_page)
+         #redirect to the dashboard
         return redirect(url_for('dashboard'))
     return render_template('login.html',form=form)
 
@@ -105,6 +114,13 @@ def logout():
     flash('You have been logged out','warning')
     return redirect(url_for('login'))
 
+#handle prevent redirect attack
+def is_safe_url(target):
+    ref_url=urlparse(request.host_url)
+    print('Ref url endpoint: ',ref_url)
+    test_url=urlparse(urljoin(request.host_url,target))
+    print("Test url: ",test_url)
+    return(test_url.scheme in ('http','https') and ref_url.netloc==test_url.netloc)
 
 
 #registration form
@@ -114,21 +130,18 @@ class RegisterForm(FlaskForm):
     password=PasswordField('Password',validators=[InputRequired(),Length(min=8,max=255)])
     confirm_password=PasswordField('Confirm password',validators=[InputRequired(),Length(min=8,max=255),EqualTo('password',message='Passwords must match')])
     submit=SubmitField('Register')
-          #check if username and email already exist
-    def check_user(self,username):
-     username=User.query.filter_by(username=form.username.data).first()
-     if username:
-        raise ValidationError('User already exists.')
-    # # flash('User already exists','danger')
-    #   form.username.errors.append('User already exists')
-    #   return render_template('register.html',form=form)
-    def check_email(self,email):
-      email=User.query.filter_by(email=form.email.data).first()
-      if email:
-        raise ValidationError('Email already registered.')
-      # flash('Email already registed.Please try another email','danger')
-        # form.email.errors.append('Email already registered.Please try another email')
-        # return render_template('register.html',form=form)
+
+    def validate_username(self,username):
+        username=User.query.filter_by(username=username.data).first()
+        if username:
+            raise ValidationError('Username already in use.Please try another username')
+    def validate_email(self,email):
+        email=User.query.filter_by(email=email.data).first()
+        if email:
+            raise ValidationError('Email already in use.Please try another email address')
+
+  
+
 
 #login form
 class LoginForm(FlaskForm):
