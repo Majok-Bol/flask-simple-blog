@@ -8,11 +8,11 @@
   </head>
   <body class="min-h-screen">
     <main class="min-h-screen">
-      <div class="flash">
+      <div class="flash fixed top-20 left-1/2 -translate-x-1/2 z-50">
         {%with messages=get_flashed_messages(with_categories=true)%} {%if
         messages%} {%for category,message in messages%}
         <div
-          class=" flash {%if category=='success'%} text-green-600 {%elif category=='info'%} text-blue-700 {%elif category=='warning'%} text-yellow-400 {%else%} text-gray-500 {%endif%}"
+          class="flash-msg {%if category=='success'%} text-green-600 {%elif category=='info'%} text-blue-700 {%elif category=='warning'%} text-yellow-400 {%else%} text-gray-500 {%endif%}"
         >
           {{message}}
         </div>
@@ -21,14 +21,13 @@
 
       {%block body%}{%endblock%}
     </main>
-    <!-- <script>
-      const messages = document.querySelectorAll(".flash");
-      messages.forEach((msg) => {
-        setTimeout(() => {
-          msg.classList.add("opacity-0");
-          setTimeout(() => msg.remove(), 400);
-        }, 3000);
-      });
-    </script> -->
   </body>
+  <script>
+    const messages = document.querySelectorAll(".flash-msg");
+    messages.forEach((msg) => {
+      setTimeout(() => {
+        msg.remove();
+      },5000);
+    });
+  </script>
 </html>
