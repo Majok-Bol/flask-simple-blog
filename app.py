@@ -120,11 +120,12 @@ def logout():
 #handle prevent redirect attack
 def is_safe_url(target):
     ref_url=urlparse(request.host_url)
-    print('Ref url endpoint: ',ref_url)
     test_url=urlparse(urljoin(request.host_url,target))
-    print("Test url: ",test_url)
     return(test_url.scheme in ('http','https') and ref_url.netloc==test_url.netloc)
-
+@app.route('/post',methods=['POST','GET'])
+@login_required
+def post():
+    return render_template('create_post.html')
 
 #registration form
 class RegisterForm(FlaskForm):
@@ -152,7 +153,9 @@ class RegisterForm(FlaskForm):
         if not re.match(r'^[A-Za-z0-9_]+$',pwd):
             raise ValidationError('Password can only contain letters,numbers and underscores')
         has_letters=re.search(r'[A-Za-z]',pwd)
+      
         has_numbers_or_underscores=re.search(r'[\d_]',pwd)
+
         if not (has_letters and has_numbers_or_underscores):
             raise ValidationError('Password must contain atleast 1 letter,number or underscore')
 
