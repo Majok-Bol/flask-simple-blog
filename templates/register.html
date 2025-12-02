@@ -1,45 +1,66 @@
 {% extends 'base_plain.html' %} {% block title%}
 <title>Register page</title>
-{% endblock %} 
-{% block body %}
-   
+{% endblock %} {% block body %}
+
 <div class="flex flex-col items-center justify-center min-h-screen">
   <form
     method="post"
-    class="flex flex-col items-center justify-center w-[500px] h-[400px] shadow-2xl bg-gray-300 rounded-[8px] pt-2 border border-gray-400"
+    class="flex flex-col items-center justify-center w-[500px] h-[480px] shadow-2xl bg-gray-300 rounded-[8px] pt-2 border border-gray-400"
   >
     <div class="flex flex-col items-center justify-center">
       {{form.hidden_tag()}}
-      <div class="flex flex-col items-center justify-center m-1">
+      <div class="flash flex flex-col relative items-center justify-center m-1 w-full ">
         {{form.username.label}}{{form.username(class='border border-gray-400
         outline:none focus:outline-none focus:ring-2 focus:ring-blue-400
         rounded-[6px] p-1 m-1',placeholder='Enter your name')}}
-
-        {%for error in form.username.errors%}
-        <p class="text-red-600">{{error}}</p>
+        <div class="min-h-[1.5rem]">
+     {%for error in
+        form.username.errors%}
+        <p class="flash-msg  text-red-600 ">{{error}}</p>
         {%endfor%}
+        </div>
+      
+    
       </div>
-      <div class="flex flex-col items-center justify-center m-1">
+      <div class="flash flex flex-col relative items-center justify-center m-1 w-full ">
         {{form.email.label}}{{form.email(class='border border-gray-400
         outline:none focus:outline-none focus:ring-2 focus:ring-blue-400
         rounded-[6px] p-1 m-1',placeholder='Enter your email')}}
-              {%for error in form.email.errors%}
-        <p class="text-red-600">{{error}}</p>
+        
+        <div class="min-h-[1.5rem]">
+              {%for error in
+        form.email.errors%}
+        <p  class="flash-msg  text-red-600">{{error}}</p>
         {%endfor%}
+        </div>
+    
       </div>
       <div class="flex flex-col items-center justify-center m-1">
         {{form.password.label}}{{form.password(class='border border-gray-400
         outline:none focus:outline-none focus:ring-2 focus:ring-blue-400
         rounded-[6px] p-1 m-1')}}
+                 <div class="min-h-[1.5rem]">
+              {%for error in
+        form.password.errors%}
+        <p  class="flash-msg  text-red-600">{{error}}</p>
+        {%endfor%}
+        </div>
+
       </div>
       <div class="flex flex-col items-center justify-center m-1">
         {{form.confirm_password.label}}{{form.confirm_password(class='border
         border-gray-400 outline:none focus:outline-none focus:ring-2
         focus:ring-blue-400 rounded-[6px] p-1 m-1')}}
+             <div class="min-h-[1.5rem]">
+              {%for error in
+        form.confirm_password.errors%}
+        <p  class="flash-msg  text-red-600">{{error}}</p>
+        {%endfor%}
+        </div>
       </div>
       <div class="flex flex-col items-center justify-center m-1">
-        {{form.submit( class='cursor-pointer bg-green-600 text-white w-60 h-[30px]  
-        rounded-[20px]')}}
+        {{form.submit( class='cursor-pointer bg-green-600 text-white w-60
+        h-[30px] rounded-[20px]')}}
       </div>
     </div>
   </form>

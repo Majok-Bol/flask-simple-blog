@@ -1,18 +1,23 @@
 
-from flask import Flask,render_template,url_for,redirect,flash
+from flask import Flask,render_template,url_for,redirect,flash,request
 from flask_login import login_manager,login_required,LoginManager,logout_user,UserMixin,current_user,login_user
 #import register,login forms
 # from forms import RegisterForm,LoginForm,User
 from dotenv import load_dotenv
-#import csrf protet
+#import csrf protect
 from flask_wtf import CSRFProtect
 from flask_sqlalchemy import SQLAlchemy
 from flask_bcrypt import Bcrypt
 #import form fields 
 from wtforms import StringField,BooleanField,EmailField,PasswordField,SubmitField
 #import validators for form input
-from wtforms.validators import InputRequired,EqualTo,Email,Length
+from wtforms.validators import InputRequired,EqualTo,Email,Length,ValidationError
 from flask_wtf import FlaskForm
+#prevent redirect attacks
+from urllib.parse import urlparse,urljoin
+#import regex
+import re
+#import os
 import os
 #initialize app with flask
 app=Flask(__name__)
@@ -59,7 +64,7 @@ def register():
         user=User(username=form.username.data,email=form.email.data,password=hashed_password)
         db.session.add(user)
         db.session.commit()
-        flash('Account created successfully','success')
+        flash('Account created successfully.Please login.','success')
         #redirect to login page
         return redirect(url_for('login',form=form))
     return render_template('register.html',form=form)
@@ -74,16 +79,23 @@ def login():
         #if user not found
         #show error
         if existing_user is None:
-            form.username.errors.append('Username not found.Please check your username')
+            form.username.errors.append('Username not found.')
             return render_template('login.html',form=form)
         if not bcrypt.check_password_hash(existing_user.password,form.password.data):
-            form.password.errors.append('Passwords is incorrect.Please try again')
+            form.password.errors.append('Password is incorrect')
             return render_template('login.html',form=form)
         #login user
         #when username and password is correct
         login_user(existing_user)
-        flash('login successful','success')
-        #redirect to the dashboard
+        # flash('login successful','success')
+        #check for redirect route
+        next_page=request.args.get('next')
+        if next_page and is_safe_url(next_page):
+            #if safe redirect
+            #go to next parameter
+            #go to that page
+            return redirect(next_page)
+         #redirect to the dashboard
         return redirect(url_for('dashboard'))
     return render_template('login.html',form=form)
 
@@ -105,7 +117,15 @@ def logout():
     flash('You have been logged out','warning')
     return redirect(url_for('login'))
 
-
+#handle prevent redirect attack
+def is_safe_url(target):
+    ref_url=urlparse(request.host_url)
+    test_url=urlparse(urljoin(request.host_url,target))
+    return(test_url.scheme in ('http','https') and ref_url.netloc==test_url.netloc)
+@app.route('/post',methods=['POST','GET'])
+@login_required
+def post():
+    return render_template('create_post.html')
 
 #registration form
 class RegisterForm(FlaskForm):
@@ -114,21 +134,34 @@ class RegisterForm(FlaskForm):
     password=PasswordField('Password',validators=[InputRequired(),Length(min=8,max=255)])
     confirm_password=PasswordField('Confirm password',validators=[InputRequired(),Length(min=8,max=255),EqualTo('password',message='Passwords must match')])
     submit=SubmitField('Register')
-          #check if username and email already exist
-    def check_user(self,username):
-     username=User.query.filter_by(username=form.username.data).first()
-     if username:
-        raise ValidationError('User already exists.')
-    # # flash('User already exists','danger')
-    #   form.username.errors.append('User already exists')
-    #   return render_template('register.html',form=form)
-    def check_email(self,email):
-      email=User.query.filter_by(email=form.email.data).first()
-      if email:
-        raise ValidationError('Email already registered.')
-      # flash('Email already registed.Please try another email','danger')
-        # form.email.errors.append('Email already registered.Please try another email')
-        # return render_template('register.html',form=form)
+
+    def validate_username(self,username):
+        user=User.query.filter_by(username=username.data).first()
+        if user:
+            raise ValidationError('Username already in use.Please try another username')
+        if " " in username.data:
+            raise ValidationError('Username must be a single word without spaces')
+
+    def validate_email(self,email):
+        email=User.query.filter_by(email=email.data).first()
+        if email:
+            raise ValidationError('Email already in use.Please try another email address')
+    def validate_password(self,password):
+        pwd=password.data
+        if len(pwd)<8:
+            raise ValidationError('Password must be atleast 8 characters.')
+        if not re.match(r'^[A-Za-z0-9_]+$',pwd):
+            raise ValidationError('Password can only contain letters,numbers and underscores')
+        has_letters=re.search(r'[A-Za-z]',pwd)
+      
+        has_numbers_or_underscores=re.search(r'[\d_]',pwd)
+
+        if not (has_letters and has_numbers_or_underscores):
+            raise ValidationError('Password must contain atleast 1 letter,number or underscore')
+
+
+  
+
 
 #login form
 class LoginForm(FlaskForm):
@@ -145,5 +178,6 @@ class User(db.Model,UserMixin):
 if __name__=='__main__':
     with app.app_context():
       db.create_all()
-        # db.drop_all()
+    #   db.drop_all()
+
     app.run(debug=True)
