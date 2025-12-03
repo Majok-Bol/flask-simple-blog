@@ -9,12 +9,14 @@ from flask_wtf import CSRFProtect
 from flask_sqlalchemy import SQLAlchemy
 from flask_bcrypt import Bcrypt
 #import form fields 
-from wtforms import StringField,BooleanField,EmailField,PasswordField,SubmitField
+from wtforms import StringField,BooleanField,EmailField,PasswordField,SubmitField,TextAreaField
 #import validators for form input
 from wtforms.validators import InputRequired,EqualTo,Email,Length,ValidationError
 from flask_wtf import FlaskForm
 #prevent redirect attacks
 from urllib.parse import urlparse,urljoin
+#use datetime
+from datetime import datetime
 #import regex
 import re
 #import os
@@ -102,8 +104,10 @@ def login():
 @app.route('/dashboard',methods=['POST','GET'])
 @login_required
 def dashboard():
+    posts=Post.query.filter_by(user_id=current_user.id).all()
+    # print('Posts: ',posts)
     msg='Welcome to your dashboard'
-    return render_template('dashboard.html',msg=msg)
+    return render_template('dashboard.html',posts=posts)
 #load user from the database
 @login_manager.user_loader
 def load_user(user_id):
@@ -122,11 +126,34 @@ def is_safe_url(target):
     ref_url=urlparse(request.host_url)
     test_url=urlparse(urljoin(request.host_url,target))
     return(test_url.scheme in ('http','https') and ref_url.netloc==test_url.netloc)
+#route to handle text area input
 @app.route('/post',methods=['POST','GET'])
 @login_required
 def post():
-    return render_template('create_post.html')
+       #use instance of text area form 
+    form=TextAreaForm()
+    #get form data
+    post=None
+    if form.validate_on_submit():
+        post=form.content.data
+        # print("Content: ",post)
+        flash('Your post has been created.','success')
+        #save changes to the database
+        new_post=Post(content=form.content.data,user_id=current_user.id)
+        db.session.add(new_post)
+        db.session.commit()
+        #redirect to dashboard
+        return redirect(url_for('dashboard'))
 
+    return render_template('create_post.html',form=form)
+
+
+#text area form
+class TextAreaForm(FlaskForm):
+    content=TextAreaField('Content',validators=[Length(min=10)])
+    submit=SubmitField('Create post')
+
+ 
 #registration form
 class RegisterForm(FlaskForm):
     username=StringField('Username',validators=[InputRequired(),Length(min=4,max=50)])
@@ -169,12 +196,25 @@ class LoginForm(FlaskForm):
     password=PasswordField('Password',validators=[InputRequired(),Length(min=8)])
     remember_me=BooleanField('Remember me')
     submit=SubmitField('Login')
+
 #create user model
 class User(db.Model,UserMixin):
     id=db.Column(db.Integer,primary_key=True)
     username=db.Column(db.String(36),nullable=False)
     email=db.Column(db.String(50),nullable=False)
     password=db.Column(db.String(255),nullable=False)
+    #link user model with post model
+    #one to many relationship
+    #one user can create many posts
+    posts=db.relationship('Post',lazy=True,backref='author')
+
+class Post(db.Model):
+    id=db.Column(db.Integer,primary_key=True)
+    content=db.Column(db.Text)
+    #link post model with user model
+    #match user post id with user id
+    user_id=db.Column(db.Integer,db.ForeignKey('user.id'))
+    date_created=db.Column(db.DateTime,default=datetime.utcnow)
 if __name__=='__main__':
     with app.app_context():
       db.create_all()

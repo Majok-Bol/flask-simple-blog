@@ -8,5 +8,15 @@
 {%else%}
 <p>You are not logged in</p>
 {%endif%}
+<div>
+   {%if posts%}
+     <p>Total posts: {{posts|length}}</p>
+   {%for post in posts%}
+   <ul><li>{{post.content}}
+    <a class="cursor-pointer text-blue-800 underline hover:text-blue-400">Delete</a>
+   </li></ul>
+   {%endfor%}
+   {%endif%}
+</div>
 <a href="{{url_for('logout')}}" class="text-blue-800 underline hover:text-blue-400">Logout</a>
 {%endblock%}

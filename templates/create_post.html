@@ -1,13 +1,29 @@
-{%extends 'base_plain.html'%}
-{%block title%}
+{%extends 'base_plain.html'%} {%block title%}
 <title>Blog</title>
-{%endblock%}
-{%block body%}
+{%endblock%} {%block body%}
 
 <h1>Blog posts</h1>
 <div>
-    <textarea class="bg-gray-300"></textarea>
-    <button>Create post</button>
+  <form method="post">
+    {{form.hidden_tag()}}
+     {{form.content.label}} 
+     {{form.content()}}
+    {{form.submit()}}
+  </form>
 </div>
+<hr />
+<h1>Submited text:</h1>
+{%if post %}
+<div>
+  <p>{{post}}</p>
+</div>
+
+{%endif%}
+
+<a
+  href="{{url_for('home')}}"
+  class="hover:text-blue-400 hover:underline cursor-pointer text-blue-400"
+  >Home</a
+>
 
 {%endblock%}
