@@ -6,15 +6,19 @@ from flask_login import login_manager,login_required,LoginManager,logout_user,Us
 from dotenv import load_dotenv
 #import csrf protect
 from flask_wtf import CSRFProtect
+#import file features
+from flask_wtf.file  import FileAllowed,FileField,FileRequired
 from flask_sqlalchemy import SQLAlchemy
 from flask_bcrypt import Bcrypt
 #import form fields 
-from wtforms import StringField,BooleanField,EmailField,PasswordField,SubmitField,TextAreaField
+from wtforms import StringField,BooleanField,EmailField,PasswordField,SubmitField,TextAreaField,FileField
 #import validators for form input
 from wtforms.validators import InputRequired,EqualTo,Email,Length,ValidationError
 from flask_wtf import FlaskForm
 #prevent redirect attacks
 from urllib.parse import urlparse,urljoin
+#secure filename
+from werkzeug.utils import secure_filename
 #import datetime
 from datetime import datetime
 #import regex
@@ -37,6 +41,11 @@ app.config['SQLALCHEMY_DATABASE_URI']=os.getenv('DATABASE_URL')
 #Dont track model changes
 #if yes,app will be slow
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS']=False
+#only allowed files can be uploaded
+ALLOWED_EXTENSIONS={'png','jpeg'}
+#get the folder to save uploaded files into
+app.config['UPLOAD_FOLDER']=os.getenv('UPLOAD_FOLDER')
+# print('Folder path: ',app.config['UPLOAD_FOLDER'])
 #initializse app with database
 db=SQLAlchemy(app)
 #initialize login manager
@@ -160,7 +169,58 @@ def delete_post(post_id):
     db.session.commit()
     flash('Post delete successfully','success')
     return redirect(url_for('dashboard'))
+#handle file upload route
+@app.route('/upload',methods=['POST','GET'])
+@login_required
+def upload():
+    uploaded_file=FileUploadForm()
+    if uploaded_file.validate_on_submit():
+        #file to upload
+        file=uploaded_file.file_name.data
+        print("File: ",file)
+        filename=secure_filename(file.filename)
+        print("File name: ",filename)
+        if allowed_file(filename):
+            #get file extension
+            # file_extension=filename.rsplit(".",1)[1].lower()
+            # print("File extension: ",file_extension)
+            # # file_path=filename
+            # print("FIle path: ",file_path)
+            combined_path=os.path.join(app.config['UPLOAD_FOLDER'],filename)
+            print("Saving file to: ",combined_path)
+                 #check if folder exists
+            if not os.path.exists(app.config['UPLOAD_FOLDER']):
+               #create folder
+               os.makedirs(app.config['UPLOAD_FOLDER'])
+               print("DEBUG: Created upload folder: ",app.config['UPLOAD_FOLDER'])
+            #save file
+            file.save(combined_path)
+            print("DEBUG: File saved successfully!")
+            #save changes to the database
+            new_upload=UploadFile(
+                filename=filename,
+                filepath=combined_path,
+                user_id=current_user.id)
+            db.session.add(new_upload)
+            db.session.commit()
+            flash('File uploaded successfully','success')
+            print('Upload id: ',new_upload.id)
+            print("File name: ",new_upload.filename)
+            #redirect to download page
+            return redirect(url_for('uploads'))
+        else:
+            flash("FIle type not allowed",'danger')
+            print("DEBUG : File type not allowed")
+    return render_template('upload_file.html',uploaded_file=uploaded_file)
+#uploads route
+@app.route('/uploads',methods=['POST','GET'])
+def uploads():
+    #get uploaded file
+    uploads=UploadFile.query.all()
+    print("Uploads: ",uploads)
+    return render_template('uploads.html',uploads=uploads)
 @app.route('/edit/<int:post_id>',methods=['POST','GET'])
+@login_required
 def edit_post(post_id):
     #fetch user post
     post=Post.query.get_or_404(post_id)
@@ -183,8 +243,11 @@ def edit_post(post_id):
         form.content.data=post.content
     #render the form
     return render_template('edit_post.html',form=form)
-
-#text area form
+#function to check allowed extensions
+def allowed_file(filename):
+    return "." in filename and \
+        filename.rsplit(".",1)[1].lower() in ALLOWED_EXTENSIONS
+# #text area form
 class TextAreaForm(FlaskForm):
     content=TextAreaField('Content',validators=[Length(min=3)])
     submit=SubmitField('Create post')
@@ -233,6 +296,11 @@ class LoginForm(FlaskForm):
     remember_me=BooleanField('Remember me')
     submit=SubmitField('Login')
 
+#file upload form
+class FileUploadForm(FlaskForm):
+    file_name=FileField("File",validators=[FileRequired(message="Please select a file to upload"),FileAllowed(ALLOWED_EXTENSIONS,message="Only images are allowed")])
+    submit=SubmitField("Upload image")
+
 #create user model
 class User(db.Model,UserMixin):
     id=db.Column(db.Integer,primary_key=True)
@@ -242,7 +310,10 @@ class User(db.Model,UserMixin):
     #link user model with post model
     #one to many relationship
     #one user can create many posts
+    #link user to a post created by that user
     posts=db.relationship('Post',lazy=True,backref='author')
+    #link user to post created by that user
+    uploads=db.relationship('UploadFile',backref='uploader',lazy=True)
 
 class Post(db.Model):
     id=db.Column(db.Integer,primary_key=True)
@@ -251,6 +322,15 @@ class Post(db.Model):
     #match user post id with user id
     user_id=db.Column(db.Integer,db.ForeignKey('user.id'))
     date_created=db.Column(db.DateTime,default=datetime.utcnow)
+#upload model to store uploaded images
+class UploadFile(db.Model):
+    id=db.Column(db.Integer,primary_key=True)
+    filename=db.Column(db.String(255))
+    filepath=db.Column(db.String(255))
+    #link post to user
+    user_id=db.Column(db.Integer,db.ForeignKey('user.id'))
+
+
 if __name__=='__main__':
     with app.app_context():
       db.create_all()

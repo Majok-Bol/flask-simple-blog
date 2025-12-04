@@ -1,0 +1,21 @@
+{%extends 'base_plain.html' %}
+{%block title%}
+<title>Uploads</title>
+{%endblock%}
+{%block body%}
+{%if uploads%}
+{%for upload in uploads%}
+<ul>
+    <li>{{upload.filename}}</li>
+</ul>
+
+{%endfor%}
+{%else%}
+<p>No uploads yet</p>
+{%endif%}
+     <a
+          href="{{url_for('home')}}"
+          class="hover:text-blue-400 hover:underline cursor-pointer text-blue-400"
+          >Home</a
+        >
+{%endblock%}
