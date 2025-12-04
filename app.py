@@ -15,6 +15,8 @@ from wtforms.validators import InputRequired,EqualTo,Email,Length,ValidationErro
 from flask_wtf import FlaskForm
 #prevent redirect attacks
 from urllib.parse import urlparse,urljoin
+#import datetime
+from datetime import datetime
 #import regex
 import re
 #import os
@@ -215,7 +217,7 @@ class Post(db.Model):
     date_created=db.Column(db.DateTime,default=datetime.utcnow)
 if __name__=='__main__':
     with app.app_context():
-      db.create_all()
-    #   db.drop_all()
+    #   db.create_all()
+      db.drop_all()
 
     app.run(debug=True)
