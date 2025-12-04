@@ -105,8 +105,6 @@ def login():
 @login_required
 def dashboard():
     posts=Post.query.filter_by(user_id=current_user.id).all()
-    # print('Posts: ',posts)
-    msg='Welcome to your dashboard'
     return render_template('dashboard.html',posts=posts)
 #load user from the database
 @login_manager.user_loader
@@ -146,11 +144,49 @@ def post():
         return redirect(url_for('dashboard'))
 
     return render_template('create_post.html',form=form)
-
+#delete post
+@app.route('/delete/<int:post_id>',methods=['POST','GET'])
+@login_required
+def delete_post(post_id):
+    post=Post.query.get_or_404(post_id)
+    #verify user owns the post
+    if post.user_id!=current_user.id:
+        flash('You are not allowed to delete this post','danger')
+        return redirect(url_for('dashboard'))
+    #if user owns the post
+    #proceed with deletion
+    db.session.delete(post)
+    #save changes to the database
+    db.session.commit()
+    flash('Post delete successfully','success')
+    return redirect(url_for('dashboard'))
+@app.route('/edit/<int:post_id>',methods=['POST','GET'])
+def edit_post(post_id):
+    #fetch user post
+    post=Post.query.get_or_404(post_id)
+    #verify if user owns the post
+    if post.user_id!=current_user.id:
+        flash('You are not allowed to edit this post','danger')
+        return redirect(url_for('dashboard'))
+    #get the form field
+    form=TextAreaForm()
+    form.submit.label.text='Edit post'
+    #validate the form
+    if form.validate_on_submit():
+        #update the content
+        post.content=form.content.data
+        #save changes to the database
+        db.session.commit()
+        flash('Content updated','success')
+        return redirect(url_for('dashboard'))
+    if request.method=='GET':
+        form.content.data=post.content
+    #render the form
+    return render_template('edit_post.html',form=form)
 
 #text area form
 class TextAreaForm(FlaskForm):
-    content=TextAreaField('Content',validators=[Length(min=10)])
+    content=TextAreaField('Content',validators=[Length(min=3)])
     submit=SubmitField('Create post')
 
  
@@ -217,7 +253,7 @@ class Post(db.Model):
     date_created=db.Column(db.DateTime,default=datetime.utcnow)
 if __name__=='__main__':
     with app.app_context():
-    #   db.create_all()
-      db.drop_all()
+      db.create_all()
+    #   db.drop_all()
 
     app.run(debug=True)

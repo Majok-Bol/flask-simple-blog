@@ -1,0 +1,16 @@
+{%extends 'base_plain.html'%}
+{%block title%}
+<title>Edit Content</title>
+{%endblock%}
+{%block body%}
+<div>
+    <form method="post">
+{{form.hidden_tag()}}
+
+        {{form.content.label}}
+        {{form.content()}}
+        {{form.submit()}}
+    </form>
+</div>
+
+{%endblock%}
