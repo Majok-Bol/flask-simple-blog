@@ -15,8 +15,6 @@ from wtforms.validators import InputRequired,EqualTo,Email,Length,ValidationErro
 from flask_wtf import FlaskForm
 #prevent redirect attacks
 from urllib.parse import urlparse,urljoin
-#use datetime
-from datetime import datetime
 #import regex
 import re
 #import os
