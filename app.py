@@ -1,5 +1,5 @@
 
-from flask import Flask,render_template,url_for,redirect,flash,request
+from flask import Flask,render_template,url_for,redirect,flash,request,send_from_directory
 from flask_login import login_manager,login_required,LoginManager,logout_user,UserMixin,current_user,login_user
 #import register,login forms
 # from forms import RegisterForm,LoginForm,User
@@ -169,6 +169,32 @@ def delete_post(post_id):
     db.session.commit()
     flash('Post delete successfully','success')
     return redirect(url_for('dashboard'))
+
+@app.route('/edit/<int:post_id>',methods=['POST','GET'])
+@login_required
+def edit_post(post_id):
+    #fetch user post
+    post=Post.query.get_or_404(post_id)
+    #verify if user owns the post
+    if post.user_id!=current_user.id:
+        flash('You are not allowed to edit this post','danger')
+        return redirect(url_for('dashboard'))
+    #get the form field
+    form=TextAreaForm()
+    form.submit.label.text='Edit post'
+    #validate the form
+    if form.validate_on_submit():
+        #update the content
+        post.content=form.content.data
+        #save changes to the database
+        db.session.commit()
+        flash('Content updated','success')
+        return redirect(url_for('dashboard'))
+    if request.method=='GET':
+        form.content.data=post.content
+    #render the form
+    return render_template('edit_post.html',form=form)
+
 #handle file upload route
 @app.route('/upload',methods=['POST','GET'])
 @login_required
@@ -199,7 +225,7 @@ def upload():
             #save changes to the database
             new_upload=UploadFile(
                 filename=filename,
-                filepath=combined_path,
+                filepath=filename,
                 user_id=current_user.id)
             db.session.add(new_upload)
             db.session.commit()
@@ -219,40 +245,26 @@ def uploads():
     uploads=UploadFile.query.all()
     print("Uploads: ",uploads)
     return render_template('uploads.html',uploads=uploads)
-@app.route('/edit/<int:post_id>',methods=['POST','GET'])
-@login_required
-def edit_post(post_id):
-    #fetch user post
-    post=Post.query.get_or_404(post_id)
-    #verify if user owns the post
-    if post.user_id!=current_user.id:
-        flash('You are not allowed to edit this post','danger')
-        return redirect(url_for('dashboard'))
-    #get the form field
-    form=TextAreaForm()
-    form.submit.label.text='Edit post'
-    #validate the form
-    if form.validate_on_submit():
-        #update the content
-        post.content=form.content.data
-        #save changes to the database
-        db.session.commit()
-        flash('Content updated','success')
-        return redirect(url_for('dashboard'))
-    if request.method=='GET':
-        form.content.data=post.content
-    #render the form
-    return render_template('edit_post.html',form=form)
+
 #function to check allowed extensions
 def allowed_file(filename):
     return "." in filename and \
         filename.rsplit(".",1)[1].lower() in ALLOWED_EXTENSIONS
-# #text area form
-class TextAreaForm(FlaskForm):
-    content=TextAreaField('Content',validators=[Length(min=3)])
-    submit=SubmitField('Create post')
 
- 
+ #serve uploaded files
+ #for users to download them
+@app.route('/uploads/<name>',methods=['POST','GET'])
+def download_file(name):
+ print("Folder path: ",app.config['UPLOAD_FOLDER'])
+ return send_from_directory(
+    app.config['UPLOAD_FOLDER'],
+    name,
+    #download file
+    as_attachment=True,
+    #download name same as file name
+    download_name=name
+    
+    )
 #registration form
 class RegisterForm(FlaskForm):
     username=StringField('Username',validators=[InputRequired(),Length(min=4,max=50)])
@@ -295,6 +307,13 @@ class LoginForm(FlaskForm):
     password=PasswordField('Password',validators=[InputRequired(),Length(min=8)])
     remember_me=BooleanField('Remember me')
     submit=SubmitField('Login')
+
+#text area form
+class TextAreaForm(FlaskForm):
+    content=TextAreaField('Content',validators=[Length(min=3)])
+    submit=SubmitField('Create post')
+
+
 
 #file upload form
 class FileUploadForm(FlaskForm):

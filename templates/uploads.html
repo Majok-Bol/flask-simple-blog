@@ -5,9 +5,12 @@
 {%block body%}
 {%if uploads%}
 {%for upload in uploads%}
-<ul>
-    <li>{{upload.filename}}</li>
-</ul>
+<div class="w-[300px]">
+  <img src="{{url_for('download_file',name=upload.filepath)}}" alt="Uploaded Image"/>
+<p>{{upload.filename}}</p>
+<a href="{{url_for('download_file',name=upload.filepath)}}" alt="Uploaded Image" class="hover:text-blue-400 hover:underline cursor-pointer text-blue-400">Download</a>
+</div>
+    
 
 {%endfor%}
 {%else%}
@@ -17,5 +20,10 @@
           href="{{url_for('home')}}"
           class="hover:text-blue-400 hover:underline cursor-pointer text-blue-400"
           >Home</a
+        >
+            <a
+          href="{{url_for('upload')}}"
+          class="hover:text-blue-400 hover:underline cursor-pointer text-blue-400"
+          >Upload file</a
         >
 {%endblock%}
