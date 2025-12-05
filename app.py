@@ -140,28 +140,19 @@ def post():
        #use instance of text area form 
     form=TextAreaForm()
     #get form data
-    # post=None
-    # title=None
-    filename=None
+    content=None
+    title=None
     if form.validate_on_submit():
-        #if there is image to upload
-        if form.image.data:
-            file=form.image.data
-            filename=secure_filename(file.filename)
-            #save to directory
-            file.save(os.path.join(app.config['UPLOAD_FOLDER'],filename))
-            flash('Your post has been created.','success')
         new_post=Post(
         title=form.title.data,
-        image=filename,
         content=form.content.data,
         user_id=current_user.id)
-            #save post in the database
+        #save post in the database
         db.session.add(new_post)
         db.session.commit()
+        flash('Post created successfully','success')
         #redirect to dashboard
         return redirect(url_for('dashboard'))
-
     return render_template('create_post.html',form=form)
 #delete post
 @app.route('/delete/<int:post_id>',methods=['POST','GET'])
@@ -369,7 +360,7 @@ class Post(db.Model):
     id=db.Column(db.Integer,primary_key=True)
     title=db.Column(db.String(255))
     #add image
-    image=db.Column(db.String(255))
+    # image=db.Column(db.String(255))
     content=db.Column(db.Text)
     #link post model with user model
     #match user post id with user id
