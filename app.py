@@ -140,12 +140,23 @@ def post():
        #use instance of text area form 
     form=TextAreaForm()
     #get form data
-    content=None
-    title=None
+    # content=None
+    # title=None
+    # image=None
     if form.validate_on_submit():
+        # filename=None
+        # if form.image.data:
+        #     filename=secure_filename(form.image.data.filename)
+        #     #get image path
+        #     image_path=os.path.join(app.config['UPLOAD_FOLDER'],filename)
+        #     #save file
+        #     form.image.data.save(image_path)
+        #     print(form.image.data.save(image_path))
+
         new_post=Post(
         title=form.title.data,
         content=form.content.data,
+        # image=filename,
         user_id=current_user.id)
         #save post in the database
         db.session.add(new_post)
@@ -331,7 +342,7 @@ class LoginForm(FlaskForm):
 #text area form
 class TextAreaForm(FlaskForm):
     title=TextAreaField('Title',validators=[Length(min=3)])
-    image=FileField('Image(optional)',validators=[FileAllowed(ALLOWED_EXTENSIONS,message="Only images are allowed")])
+    # image=FileField('Image(optional)',validators=[FileAllowed(ALLOWED_EXTENSIONS,message="Only images are allowed")])
     content=TextAreaField('Content',validators=[Length(min=3)])
     submit=SubmitField('Create post')
 
