@@ -1,4 +1,4 @@
-
+#i want blog page be like this user can enter title, in the body he/she can upload any image then can add text  after that..if title and no image then add body like text;
 from flask import Flask,render_template,url_for,redirect,flash,request,send_from_directory
 from flask_login import login_manager,login_required,LoginManager,logout_user,UserMixin,current_user,login_user
 #import register,login forms
@@ -140,13 +140,23 @@ def post():
        #use instance of text area form 
     form=TextAreaForm()
     #get form data
-    post=None
+    # post=None
+    # title=None
+    filename=None
     if form.validate_on_submit():
-        post=form.content.data
-        # print("Content: ",post)
-        flash('Your post has been created.','success')
-        #save changes to the database
-        new_post=Post(content=form.content.data,user_id=current_user.id)
+        #if there is image to upload
+        if form.image.data:
+            file=form.image.data
+            filename=secure_filename(file.filename)
+            #save to directory
+            file.save(os.path.join(app.config['UPLOAD_FOLDER'],filename))
+            flash('Your post has been created.','success')
+        new_post=Post(
+        title=form.title.data,
+        image=filename,
+        content=form.content.data,
+        user_id=current_user.id)
+            #save post in the database
         db.session.add(new_post)
         db.session.commit()
         #redirect to dashboard
@@ -185,12 +195,14 @@ def edit_post(post_id):
     #validate the form
     if form.validate_on_submit():
         #update the content
+        post.title=form.title.data
         post.content=form.content.data
         #save changes to the database
         db.session.commit()
         flash('Content updated','success')
         return redirect(url_for('dashboard'))
     if request.method=='GET':
+        form.title.data=post.title
         form.content.data=post.content
     #render the form
     return render_template('edit_post.html',form=form)
@@ -238,6 +250,23 @@ def upload():
             flash("FIle type not allowed",'danger')
             print("DEBUG : File type not allowed")
     return render_template('upload_file.html',uploaded_file=uploaded_file)
+
+#delete upload
+@app.route('/delete_upload/<int:post_id>',methods=['POST','GET'])
+def delete_upload(post_id):
+    post_to_delete=UploadFile.query.get_or_404(post_id)
+    if post_to_delete.user_id!=current_user.id:
+        flash('You are not allowed to delete this uploaded file','danger')
+        return redirect(url_for('uploads'))
+    #if allowed
+    #delete the uploaded file
+    db.session.delete(post_to_delete)
+    #save changes
+    db.session.commit()
+    #redirect to home page
+    return redirect(url_for('uploads'))
+
+
 #uploads route
 @app.route('/uploads',methods=['POST','GET'])
 def uploads():
@@ -310,6 +339,8 @@ class LoginForm(FlaskForm):
 
 #text area form
 class TextAreaForm(FlaskForm):
+    title=TextAreaField('Title',validators=[Length(min=3)])
+    image=FileField('Image(optional)',validators=[FileAllowed(ALLOWED_EXTENSIONS,message="Only images are allowed")])
     content=TextAreaField('Content',validators=[Length(min=3)])
     submit=SubmitField('Create post')
 
@@ -317,7 +348,7 @@ class TextAreaForm(FlaskForm):
 
 #file upload form
 class FileUploadForm(FlaskForm):
-    file_name=FileField("File",validators=[FileRequired(message="Please select a file to upload"),FileAllowed(ALLOWED_EXTENSIONS,message="Only images are allowed")])
+    file_name=FileField("File",validators=[FileAllowed(ALLOWED_EXTENSIONS,message="Only images are allowed")])
     submit=SubmitField("Upload image")
 
 #create user model
@@ -336,6 +367,9 @@ class User(db.Model,UserMixin):
 
 class Post(db.Model):
     id=db.Column(db.Integer,primary_key=True)
+    title=db.Column(db.String(255))
+    #add image
+    image=db.Column(db.String(255))
     content=db.Column(db.Text)
     #link post model with user model
     #match user post id with user id
@@ -349,7 +383,11 @@ class UploadFile(db.Model):
     #link post to user
     user_id=db.Column(db.Integer,db.ForeignKey('user.id'))
 
-
+#Comment model to handle comments
+# class Comments(db.Model):
+#     id=db.Column(db.Integer,primary_key=True)
+#     content=db.Column(db.String(255))
+#     user_id=db.Column(db.Integer,db.ForeignKey('user.id'))
 if __name__=='__main__':
     with app.app_context():
       db.create_all()
