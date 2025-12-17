@@ -15,24 +15,23 @@
           class="hover:text-blue-400 hover:underline cursor-pointer text-blue-400"
           >Home</a
         >
+           <a
+          href="{{url_for('uploads')}}"
+          class="hover:text-blue-400 hover:underline cursor-pointer text-blue-400"
+          >Uploads</a
+        >
+      
         <a
           href="{{url_for('dashboard')}}"
           class="hover:text-blue-400 hover:underline cursor-pointer text-blue-400"
           >Dashboard</a
         >
-          <a href="{{url_for('post')}}" class="hover:text-blue-400 hover:underline cursor-pointer text-blue-400"
-          >Create post</a
-        >
-        <a
-          href="{{url_for('upload')}}"
-          class="hover:text-blue-400 hover:underline cursor-pointer text-blue-400"
-          >Upload file</a
-        >
-             <a
-          href="{{url_for('uploads')}}"
-          class="hover:text-blue-400 hover:underline cursor-pointer text-blue-400"
-          >View Uploads</a
-        >
+        
+      <a href="{{url_for('create_post')}}"
+                class="hover:text-blue-400 hover:underline cursor-pointer text-blue-400"
+      
+      >Create post</a>
+      
         <a
           href="{{url_for('login')}}"
           class="hover:underline hover:text-blue-400 cursor-pointer text-blue-400"

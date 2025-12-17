@@ -1,31 +1,29 @@
-{%extends 'base_plain.html'%} {%block title%}
-<title>Blog</title>
-{%endblock%} {%block body%}
 
-<h1>Blog posts</h1>
-<div>
-  <form method="post">
-    {{form.hidden_tag()}}
-    {{form.title.label}}
-    {{form.title()}}
-     {{form.content.label}} 
-     {{form.content()}}
-    {{form.submit()}}
-  </form>
-</div>
-<hr />
-<h1>Submited text:</h1>
-{%if post %}
-<div>
-  <p>{{post}}</p>
-</div>
+{%extends 'base.html'%}
+{%block body%}
+<h1>Blog post</h1>
+<form enctype="multipart/form-data" method="post">
+    {{post.hidden_tag()}}
+    <div>
+{{post.title.label}}
+{{post.title()}}
+    </div>
+     <div>
+        {{post.image.label}}
+        {{post.image()}}
+    </div>
+     <div>
+        {{post.content.label}}
+        {{post.content()}}
+        
+    </div>
+     <div>
+        {{post.submit()}}
+        
+    </div>
+     <div>
+        
+    </div>
 
-{%endif%}
-
-<a
-  href="{{url_for('home')}}"
-  class="hover:text-blue-400 hover:underline cursor-pointer text-blue-400"
-  >Home</a
->
-
+</form>
 {%endblock%}

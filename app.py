@@ -42,7 +42,7 @@ app.config['SQLALCHEMY_DATABASE_URI']=os.getenv('DATABASE_URL')
 #if yes,app will be slow
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS']=False
 #only allowed files can be uploaded
-ALLOWED_EXTENSIONS={'png','jpeg'}
+ALLOWED_EXTENSIONS={'png','jpeg','jpg'}
 #get the folder to save uploaded files into
 app.config['UPLOAD_FOLDER']=os.getenv('UPLOAD_FOLDER')
 # print('Folder path: ',app.config['UPLOAD_FOLDER'])
@@ -113,8 +113,18 @@ def login():
 @app.route('/dashboard',methods=['POST','GET'])
 @login_required
 def dashboard():
+    #get posts
     posts=Post.query.filter_by(user_id=current_user.id).all()
+    print("Posts: ",posts)
+    # posts=Post.query.filter_by(user_id=current_user.id).all()
     return render_template('dashboard.html',posts=posts)
+
+#handle prevent redirect attack
+def is_safe_url(target):
+    ref_url=urlparse(request.host_url)
+    test_url=urlparse(urljoin(request.host_url,target))
+    return(test_url.scheme in ('http','https') and ref_url.netloc==test_url.netloc)
+
 #load user from the database
 @login_manager.user_loader
 def load_user(user_id):
@@ -127,175 +137,71 @@ def logout():
     logout_user()
     flash('You have been logged out','warning')
     return redirect(url_for('login'))
-
-#handle prevent redirect attack
-def is_safe_url(target):
-    ref_url=urlparse(request.host_url)
-    test_url=urlparse(urljoin(request.host_url,target))
-    return(test_url.scheme in ('http','https') and ref_url.netloc==test_url.netloc)
-#route to handle text area input
-@app.route('/post',methods=['POST','GET'])
-@login_required
-def post():
-       #use instance of text area form 
-    form=TextAreaForm()
-    #get form data
-    # content=None
-    # title=None
-    # image=None
-    if form.validate_on_submit():
-        # filename=None
-        # if form.image.data:
-        #     filename=secure_filename(form.image.data.filename)
-        #     #get image path
-        #     image_path=os.path.join(app.config['UPLOAD_FOLDER'],filename)
-        #     #save file
-        #     form.image.data.save(image_path)
-        #     print(form.image.data.save(image_path))
-
+#post route
+@app.route('/create_post',methods=['POST','GET'])
+def create_post():
+    #create instance of post form
+    post=PostForm()
+    if post.validate_on_submit():
+        #save first post,  image is optional
         new_post=Post(
-        title=form.title.data,
-        content=form.content.data,
-        # image=filename,
-        user_id=current_user.id)
-        #save post in the database
+            title=post.title.data,
+            content=post.content.data,
+            user_id=current_user.id
+
+        )
+        #add title and content to the database
         db.session.add(new_post)
+        #save changes
         db.session.commit()
-        flash('Post created successfully','success')
-        #redirect to dashboard
-        return redirect(url_for('dashboard'))
-    return render_template('create_post.html',form=form)
-#delete post
-@app.route('/delete/<int:post_id>',methods=['POST','GET'])
-@login_required
-def delete_post(post_id):
-    post=Post.query.get_or_404(post_id)
-    #verify user owns the post
-    if post.user_id!=current_user.id:
-        flash('You are not allowed to delete this post','danger')
-        return redirect(url_for('dashboard'))
-    #if user owns the post
-    #proceed with deletion
-    db.session.delete(post)
-    #save changes to the database
-    db.session.commit()
-    flash('Post delete successfully','success')
-    return redirect(url_for('dashboard'))
-
-@app.route('/edit/<int:post_id>',methods=['POST','GET'])
-@login_required
-def edit_post(post_id):
-    #fetch user post
-    post=Post.query.get_or_404(post_id)
-    #verify if user owns the post
-    if post.user_id!=current_user.id:
-        flash('You are not allowed to edit this post','danger')
-        return redirect(url_for('dashboard'))
-    #get the form field
-    form=TextAreaForm()
-    form.submit.label.text='Edit post'
-    #validate the form
-    if form.validate_on_submit():
-        #update the content
-        post.title=form.title.data
-        post.content=form.content.data
-        #save changes to the database
-        db.session.commit()
-        flash('Content updated','success')
-        return redirect(url_for('dashboard'))
-    if request.method=='GET':
-        form.title.data=post.title
-        form.content.data=post.content
-    #render the form
-    return render_template('edit_post.html',form=form)
-
-#handle file upload route
-@app.route('/upload',methods=['POST','GET'])
-@login_required
-def upload():
-    uploaded_file=FileUploadForm()
-    if uploaded_file.validate_on_submit():
-        #file to upload
-        file=uploaded_file.file_name.data
-        print("File: ",file)
-        filename=secure_filename(file.filename)
-        print("File name: ",filename)
-        if allowed_file(filename):
-            #get file extension
-            # file_extension=filename.rsplit(".",1)[1].lower()
-            # print("File extension: ",file_extension)
-            # # file_path=filename
-            # print("FIle path: ",file_path)
-            combined_path=os.path.join(app.config['UPLOAD_FOLDER'],filename)
-            print("Saving file to: ",combined_path)
-                 #check if folder exists
+        #check if there is image uploaded
+        if post.image.data:
+            #get the filename
+            filename=secure_filename(post.image.data.filename)
+            #check if folder does not exist
             if not os.path.exists(app.config['UPLOAD_FOLDER']):
-               #create folder
-               os.makedirs(app.config['UPLOAD_FOLDER'])
-               print("DEBUG: Created upload folder: ",app.config['UPLOAD_FOLDER'])
-            #save file
-            file.save(combined_path)
-            print("DEBUG: File saved successfully!")
-            #save changes to the database
-            new_upload=UploadFile(
-                filename=filename,
-                filepath=filename,
-                user_id=current_user.id)
-            db.session.add(new_upload)
+                print('Folder does not exist: ',app.config['UPLOAD_FOLDER'])
+                #create folder
+                os.makedirs(app.config['UPLOAD_FOLDER'])
+            #create image path
+            image_path=os.path.join(app.config['UPLOAD_FOLDER'],filename)
+            print(f"Image path:{image_path}")
+            #save image path
+            post.image.data.save(image_path)
+            #save to the database
+            #create instance of image
+            post_image=PostImage(
+                    #filename
+                    filename=filename,
+                    post_id=new_post.id
+                )
+                #save changes in the database
+            db.session.add(post_image)
+            #commit changes
             db.session.commit()
-            flash('File uploaded successfully','success')
-            print('Upload id: ',new_upload.id)
-            print("File name: ",new_upload.filename)
-            #redirect to download page
-            return redirect(url_for('uploads'))
-        else:
-            flash("FIle type not allowed",'danger')
-            print("DEBUG : File type not allowed")
-    return render_template('upload_file.html',uploaded_file=uploaded_file)
-
-#delete upload
-@app.route('/delete_upload/<int:post_id>',methods=['POST','GET'])
-def delete_upload(post_id):
-    post_to_delete=UploadFile.query.get_or_404(post_id)
-    if post_to_delete.user_id!=current_user.id:
-        flash('You are not allowed to delete this uploaded file','danger')
-        return redirect(url_for('uploads'))
-    #if allowed
-    #delete the uploaded file
-    db.session.delete(post_to_delete)
-    #save changes
-    db.session.commit()
-    #redirect to home page
-    return redirect(url_for('uploads'))
-
-
-#uploads route
+        flash('Post created successfully','success')
+        return redirect(url_for('dashboard'))
+        # return render_template('create_post.html',post=post)
+    return render_template('create_post.html',post=post)
+    
+#uploads
 @app.route('/uploads',methods=['POST','GET'])
 def uploads():
-    #get uploaded file
-    uploads=UploadFile.query.all()
+    #get uploads
+    uploads=Post.query.all()
     print("Uploads: ",uploads)
     return render_template('uploads.html',uploads=uploads)
-
-#function to check allowed extensions
-def allowed_file(filename):
-    return "." in filename and \
-        filename.rsplit(".",1)[1].lower() in ALLOWED_EXTENSIONS
-
- #serve uploaded files
- #for users to download them
+#serve images for download
 @app.route('/uploads/<name>',methods=['POST','GET'])
 def download_file(name):
- print("Folder path: ",app.config['UPLOAD_FOLDER'])
- return send_from_directory(
-    app.config['UPLOAD_FOLDER'],
-    name,
-    #download file
-    as_attachment=True,
-    #download name same as file name
-    download_name=name
-    
-    )
+    return send_from_directory(
+        app.config['UPLOAD_FOLDER'],
+        name,
+        as_attachment=True,
+        #download name same as filename
+        download_name=name
+        )
+
 #registration form
 class RegisterForm(FlaskForm):
     username=StringField('Username',validators=[InputRequired(),Length(min=4,max=50)])
@@ -329,7 +235,12 @@ class RegisterForm(FlaskForm):
             raise ValidationError('Password must contain atleast 1 letter,number or underscore')
 
 
-  
+#form for creating post
+class PostForm(FlaskForm):
+    title=StringField('Title')
+    image=FileField('Image(optional)',validators=[FileAllowed(ALLOWED_EXTENSIONS,message='Only images are allowed')])
+    content=StringField('Content')
+    submit=SubmitField('Create post')
 
 
 #login form
@@ -339,19 +250,6 @@ class LoginForm(FlaskForm):
     remember_me=BooleanField('Remember me')
     submit=SubmitField('Login')
 
-#text area form
-class TextAreaForm(FlaskForm):
-    title=TextAreaField('Title',validators=[Length(min=3)])
-    # image=FileField('Image(optional)',validators=[FileAllowed(ALLOWED_EXTENSIONS,message="Only images are allowed")])
-    content=TextAreaField('Content',validators=[Length(min=3)])
-    submit=SubmitField('Create post')
-
-
-
-#file upload form
-class FileUploadForm(FlaskForm):
-    file_name=FileField("File",validators=[FileAllowed(ALLOWED_EXTENSIONS,message="Only images are allowed")])
-    submit=SubmitField("Upload image")
 
 #create user model
 class User(db.Model,UserMixin):
@@ -359,37 +257,26 @@ class User(db.Model,UserMixin):
     username=db.Column(db.String(36),nullable=False)
     email=db.Column(db.String(50),nullable=False)
     password=db.Column(db.String(255),nullable=False)
-    #link user model with post model
-    #one to many relationship
-    #one user can create many posts
-    #link user to a post created by that user
-    posts=db.relationship('Post',lazy=True,backref='author')
-    #link user to post created by that user
-    uploads=db.relationship('UploadFile',backref='uploader',lazy=True)
-
+#create a database model for post table
 class Post(db.Model):
     id=db.Column(db.Integer,primary_key=True)
-    title=db.Column(db.String(255))
+    #post title
+    title=db.Column(db.String(36))
+    #content
+    content=db.Column(db.String(255))
+    #link post to a user
+    user_id=db.Column(db.Integer,db.ForeignKey('user.id'))
+    #date created
+    created_at=db.Column(db.DateTime,default=datetime.utcnow)
     #add image
-    # image=db.Column(db.String(255))
-    content=db.Column(db.Text)
-    #link post model with user model
-    #match user post id with user id
-    user_id=db.Column(db.Integer,db.ForeignKey('user.id'))
-    date_created=db.Column(db.DateTime,default=datetime.utcnow)
-#upload model to store uploaded images
-class UploadFile(db.Model):
+    images=db.relationship('PostImage',backref='post',lazy=True)
+#create database table for image uploaded
+class PostImage(db.Model):
     id=db.Column(db.Integer,primary_key=True)
-    filename=db.Column(db.String(255))
-    filepath=db.Column(db.String(255))
-    #link post to user
-    user_id=db.Column(db.Integer,db.ForeignKey('user.id'))
-
-#Comment model to handle comments
-# class Comments(db.Model):
-#     id=db.Column(db.Integer,primary_key=True)
-#     content=db.Column(db.String(255))
-#     user_id=db.Column(db.Integer,db.ForeignKey('user.id'))
+    #filename for image
+    filename=db.Column(db.String(36))
+    #link image to the post table
+    post_id=db.Column(db.ForeignKey('post.id'))
 if __name__=='__main__':
     with app.app_context():
       db.create_all()
