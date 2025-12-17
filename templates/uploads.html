@@ -12,6 +12,8 @@
 {%endfor%}
 {%endif%}
 <p>{{upload.content}}</p>
+<a href="{{url_for('edit_post',post_id=upload.id)}}">Edit</a>
 {%endfor%}
 {%endif%}
+
 {%endblock%}

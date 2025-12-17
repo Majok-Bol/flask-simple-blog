@@ -201,6 +201,68 @@ def download_file(name):
         #download name same as filename
         download_name=name
         )
+#edit post
+@app.route('/edit_post/<int:post_id>',methods=['POST','GET'])
+def edit_post(post_id):
+    #get the post to delete
+    post=Post.query.get_or_404(post_id)
+    # print("Posts: ",post)
+    # print("Posts image: ",post.images)
+    if post.user_id!=current_user.id:
+        flash('You are not allowed to edit this post','danger')
+        #redirect to dashboard
+        return redirect(url_for('dashboard'))
+    #if valid
+    #get the post form
+    form=PostForm()
+    #check if form is validated
+    if form.validate_on_submit():
+        #get the title
+        post.title=form.title.data
+        #get the content
+        post.content=form.content.data
+        #save changes
+        # db.session.commit()       
+        #handle image update
+        if form.image.data:
+            filename=secure_filename(form.image.data.filename)
+            print("Filename: ",filename)
+            #ensure folder exists
+            if not os.path.exists(app.config['UPLOAD_FOLDER']):
+                os.makedirs(app.config['UPLOAD_FOLDER'])
+            #get image path
+            image_path=os.path.join(app.config['UPLOAD_FOLDER'],filename)
+            print("File image edit path: ",image_path)
+            
+            #check if post has image
+            if post.images:
+                old_image=post.images[0]
+                print("Image path: ",post.images[0])
+                #get old path
+                old_path=os.path.join(app.config['UPLOAD_FOLDER'],old_image.filename)
+                print("Old path: ",old_path)
+                #delete old path
+                if os.path.exists(old_path):
+                    #remove it
+                    os.remove(old_path)
+                #update filename in the database
+                old_image.filename=filename
+            else:
+             new_image=PostImage(filename=filename,post_id=post.id)
+             db.session.add(new_image)
+            #save path
+            form.image.data.save(image_path)
+        #save changes
+        db.session.commit()
+        flash('Post updated successfully','success')
+        return redirect(url_for('dashboard'))
+     #prefill the form
+    if request.method=='GET':
+        form.title.data=post.title
+        form.content.data=post.content    
+    
+    return render_template('edit_post.html',post=post,form=form)
+
 
 #registration form
 class RegisterForm(FlaskForm):
@@ -263,7 +325,7 @@ class Post(db.Model):
     #post title
     title=db.Column(db.String(36))
     #content
-    content=db.Column(db.String(255))
+    content=db.Column(db.Text)
     #link post to a user
     user_id=db.Column(db.Integer,db.ForeignKey('user.id'))
     #date created
