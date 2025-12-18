@@ -25,6 +25,8 @@ from datetime import datetime
 import re
 #import os
 import os
+#import pathlib
+# from pathlib import Path
 #initialize app with flask
 app=Flask(__name__)
 #initialize app with csrf protect
@@ -115,7 +117,7 @@ def login():
 def dashboard():
     #get posts
     posts=Post.query.filter_by(user_id=current_user.id).all()
-    print("Posts: ",posts)
+    # print("Posts: ",posts)
     # posts=Post.query.filter_by(user_id=current_user.id).all()
     return render_template('dashboard.html',posts=posts)
 
@@ -160,12 +162,12 @@ def create_post():
             filename=secure_filename(post.image.data.filename)
             #check if folder does not exist
             if not os.path.exists(app.config['UPLOAD_FOLDER']):
-                print('Folder does not exist: ',app.config['UPLOAD_FOLDER'])
+                # print('Folder does not exist: ',app.config['UPLOAD_FOLDER'])
                 #create folder
                 os.makedirs(app.config['UPLOAD_FOLDER'])
             #create image path
             image_path=os.path.join(app.config['UPLOAD_FOLDER'],filename)
-            print(f"Image path:{image_path}")
+            # print(f"Image path:{image_path}")
             #save image path
             post.image.data.save(image_path)
             #save to the database
@@ -189,7 +191,7 @@ def create_post():
 def uploads():
     #get uploads
     uploads=Post.query.all()
-    print("Uploads: ",uploads)
+    # print("Uploads: ",uploads)
     return render_template('uploads.html',uploads=uploads)
 #serve images for download
 @app.route('/uploads/<name>',methods=['POST','GET'])
@@ -226,21 +228,21 @@ def edit_post(post_id):
         #handle image update
         if form.image.data:
             filename=secure_filename(form.image.data.filename)
-            print("Filename: ",filename)
+            # print("Filename: ",filename)
             #ensure folder exists
             if not os.path.exists(app.config['UPLOAD_FOLDER']):
                 os.makedirs(app.config['UPLOAD_FOLDER'])
             #get image path
             image_path=os.path.join(app.config['UPLOAD_FOLDER'],filename)
-            print("File image edit path: ",image_path)
+            # print("File image edit path: ",image_path)
             
             #check if post has image
             if post.images:
                 old_image=post.images[0]
-                print("Image path: ",post.images[0])
+                # print("Image path: ",post.images[0])
                 #get old path
                 old_path=os.path.join(app.config['UPLOAD_FOLDER'],old_image.filename)
-                print("Old path: ",old_path)
+                # print("Old path: ",old_path)
                 #delete old path
                 if os.path.exists(old_path):
                     #remove it
@@ -263,7 +265,21 @@ def edit_post(post_id):
     
     return render_template('edit_post.html',post=post,form=form)
 
-
+#delete post
+@app.route('/delete/<int:post_id>',methods=['POST','GET'])
+def delete_post(post_id):
+    #get the post
+    post=Post.query.get_or_404(post_id)
+    if post.user_id!=current_user.id:
+        flash("You cannot delete this post","danger")
+        return redirect(url_for('dashboard'))
+    #if authorized to delete
+    #delete the post
+    db.session.delete(post)
+    #save changes to the database
+    db.session.commit()
+    flash("Post delete successfully","success")
+    return redirect(url_for('home'))
 #registration form
 class RegisterForm(FlaskForm):
     username=StringField('Username',validators=[InputRequired(),Length(min=4,max=50)])

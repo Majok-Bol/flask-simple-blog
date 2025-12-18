@@ -8,11 +8,12 @@
 <div>
     <img src="{{url_for('download_file',name=image.filename)}}" alt="uploaded image"/>
 </div>
-{{image.filename}}
+<!-- {{image.filename}} -->
 {%endfor%}
 {%endif%}
 <p>{{upload.content}}</p>
 <a href="{{url_for('edit_post',post_id=upload.id)}}">Edit</a>
+<a href="{{url_for('delete_post',post_id=upload.id)}}">Delete post</a>
 {%endfor%}
 {%endif%}
 
