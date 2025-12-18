@@ -25,8 +25,6 @@ from datetime import datetime
 import re
 #import os
 import os
-#import pathlib
-# from pathlib import Path
 #initialize app with flask
 app=Flask(__name__)
 #initialize app with csrf protect
@@ -56,13 +54,16 @@ login_manager=LoginManager()
 login_manager.init_app(app)
 #always redirect to login page
 #if user is not logged in
-login_manager.login_view='login'
+login_manager.login_view='uploads'
 login_manager.login_message_category='info'
 #handle root url
-@app.route('/')
-@app.route('/home',methods=['POST','GET'])
-def home():
-    return render_template('home.html')
+# @app.route('/')
+# @app.route('/home',methods=['POST','GET'])
+# def home():
+#     posts=Post.query.filter_by(user_id=current_user.id).all()
+#     # print("Posts: ",posts)
+#     # posts=Post.query.filter_by(user_id=current_user.id).all()
+#     return render_template('home.html',posts=posts)
 
 #handle register route
 @app.route('/register',methods=['POST','GET'])
@@ -139,9 +140,19 @@ def logout():
     logout_user()
     flash('You have been logged out','warning')
     return redirect(url_for('login'))
+#uploads
+@app.route('/')
+@app.route('/blog')
+def display_blog():
+    #get uploads
+    posts=Post.query.all()
+    # print("Uploads: ",uploads)
+    return render_template('blog.html',posts=posts)
 #post route
-@app.route('/create_post',methods=['POST','GET'])
-def create_post():
+@app.route('/create_blog',methods=['POST','GET'])
+
+@login_required
+def create_blog_post():
     #create instance of post form
     post=PostForm()
     if post.validate_on_submit():
@@ -184,17 +195,11 @@ def create_post():
         flash('Post created successfully','success')
         return redirect(url_for('dashboard'))
         # return render_template('create_post.html',post=post)
-    return render_template('create_post.html',post=post)
+    return render_template('create_blog.html',post=post)
     
-#uploads
-@app.route('/uploads',methods=['POST','GET'])
-def uploads():
-    #get uploads
-    uploads=Post.query.all()
-    # print("Uploads: ",uploads)
-    return render_template('uploads.html',uploads=uploads)
+
 #serve images for download
-@app.route('/uploads/<name>',methods=['POST','GET'])
+@app.route('/blog/<name>',methods=['POST','GET'])
 def download_file(name):
     return send_from_directory(
         app.config['UPLOAD_FOLDER'],
@@ -204,10 +209,11 @@ def download_file(name):
         download_name=name
         )
 #edit post
-@app.route('/edit_post/<int:post_id>',methods=['POST','GET'])
-def edit_post(post_id):
+@app.route('/edit/<int:blog_id>',methods=['POST','GET'])
+@login_required
+def edit_blog_post(blog_id):
     #get the post to delete
-    post=Post.query.get_or_404(post_id)
+    post=Post.query.get_or_404(blog_id)
     # print("Posts: ",post)
     # print("Posts image: ",post.images)
     if post.user_id!=current_user.id:
@@ -263,13 +269,14 @@ def edit_post(post_id):
         form.title.data=post.title
         form.content.data=post.content    
     
-    return render_template('edit_post.html',post=post,form=form)
+    return render_template('edit_blog.html',post=post,form=form)
 
 #delete post
-@app.route('/delete/<int:post_id>',methods=['POST','GET'])
-def delete_post(post_id):
+@app.route('/delete/<int:blog_id>',methods=['POST','GET'])
+@login_required
+def delete_blog_post(blog_id):
     #get the post
-    post=Post.query.get_or_404(post_id)
+    post=Post.query.get_or_404(blog_id)
     if post.user_id!=current_user.id:
         flash("You cannot delete this post","danger")
         return redirect(url_for('dashboard'))
@@ -279,7 +286,7 @@ def delete_post(post_id):
     #save changes to the database
     db.session.commit()
     flash("Post delete successfully","success")
-    return redirect(url_for('home'))
+    return redirect(url_for('display_blog'))
 #registration form
 class RegisterForm(FlaskForm):
     username=StringField('Username',validators=[InputRequired(),Length(min=4,max=50)])

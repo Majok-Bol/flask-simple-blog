@@ -10,15 +10,11 @@
   <body>
     <main>
       <nav>
-        <a
-          href="{{url_for('home')}}"
-          class="hover:text-blue-400 hover:underline cursor-pointer text-blue-400"
-          >Home</a
-        >
+     
            <a
-          href="{{url_for('uploads')}}"
+          href="{{url_for('display_blog')}}"
           class="hover:text-blue-400 hover:underline cursor-pointer text-blue-400"
-          >Uploads</a
+          >Blog posts</a
         >
       
         <a
@@ -27,7 +23,7 @@
           >Dashboard</a
         >
         
-      <a href="{{url_for('create_post')}}"
+      <a href="{{url_for('create_blog_post')}}"
                 class="hover:text-blue-400 hover:underline cursor-pointer text-blue-400"
       
       >Create post</a>

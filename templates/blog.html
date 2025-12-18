@@ -1,0 +1,18 @@
+{%extends 'base.html'%}
+{%block body%}
+{%if posts%}
+{%for post in posts%}
+<h2>{{post.title}} </h2>
+{%if post.images%}
+{%for image in post.images%}
+<div>
+    <img src="{{url_for('download_file',name=image.filename)}}" alt="uploaded image"/>
+</div>
+{%endfor%}
+{%endif%}
+<p>{{post.content}}</p>
+
+{%endfor%}
+{%endif%}
+
+{%endblock%}
