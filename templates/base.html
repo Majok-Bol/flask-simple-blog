@@ -5,29 +5,28 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     {%block title%}{%endblock%}
     <script src="https://cdn.tailwindcss.com"></script>
-    
   </head>
   <body>
     <main>
       <nav>
-     
-           <a
+        <a
           href="{{url_for('display_blog')}}"
           class="hover:text-blue-400 hover:underline cursor-pointer text-blue-400"
           >Blog posts</a
         >
-      
+
         <a
           href="{{url_for('dashboard')}}"
           class="hover:text-blue-400 hover:underline cursor-pointer text-blue-400"
           >Dashboard</a
         >
-        
-      <a href="{{url_for('create_blog_post')}}"
-                class="hover:text-blue-400 hover:underline cursor-pointer text-blue-400"
-      
-      >Create post</a>
-      
+
+        <a
+          href="{{url_for('create_blog_post')}}"
+          class="hover:text-blue-400 hover:underline cursor-pointer text-blue-400"
+          >Create post</a
+        >
+
         <a
           href="{{url_for('login')}}"
           class="hover:underline hover:text-blue-400 cursor-pointer text-blue-400"
@@ -39,11 +38,11 @@
           >Register</a
         >
       </nav>
-      <div class="flash fixed top-20 left-1/2 -translate-x-1/2 z-50 ">
+      <div class="flash fixed top-20 left-1/2 -translate-x-1/2 z-50">
         {%with messages=get_flashed_messages(with_categories=true)%} {%if
         messages%} {%for category,message in messages%}
         <div
-          class=" flash-msg {%if category=='success'%} text-green-600 {%elif category=='info'%} text-blue-700 flex flex-row justify-center items-center relative {%elif category=='warning'%} text-yellow-400 {%else%} text-gray-500 {%endif%}"
+          class="flash-msg {%if category=='success'%} text-green-600 {%elif category=='info'%} text-blue-700 flex flex-row justify-center items-center relative {%elif category=='warning'%} text-yellow-400 {%else%} text-gray-500 {%endif%}"
         >
           {{message}}
         </div>
@@ -51,9 +50,8 @@
       </div>
       {%block body%}{%endblock%}
     </main>
-
   </body>
-    <script>
+  <script>
     const messages = document.querySelectorAll(".flash-msg");
     messages.forEach((msg) => {
       setTimeout(() => {

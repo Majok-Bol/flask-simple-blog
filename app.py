@@ -54,17 +54,8 @@ login_manager=LoginManager()
 login_manager.init_app(app)
 #always redirect to login page
 #if user is not logged in
-login_manager.login_view='uploads'
+login_manager.login_view='login'
 login_manager.login_message_category='info'
-#handle root url
-# @app.route('/')
-# @app.route('/home',methods=['POST','GET'])
-# def home():
-#     posts=Post.query.filter_by(user_id=current_user.id).all()
-#     # print("Posts: ",posts)
-#     # posts=Post.query.filter_by(user_id=current_user.id).all()
-#     return render_template('home.html',posts=posts)
-
 #handle register route
 @app.route('/register',methods=['POST','GET'])
 def register():
@@ -150,7 +141,6 @@ def display_blog():
     return render_template('blog.html',posts=posts)
 #post route
 @app.route('/create_blog',methods=['POST','GET'])
-
 @login_required
 def create_blog_post():
     #create instance of post form
@@ -201,6 +191,9 @@ def create_blog_post():
 #serve images for download
 @app.route('/blog/<name>',methods=['POST','GET'])
 def download_file(name):
+    path=os.path.join(app.config['UPLOAD_FOLDER'],name)
+    if not os.path.exists(path):
+        abort(404)
     return send_from_directory(
         app.config['UPLOAD_FOLDER'],
         name,
