@@ -130,7 +130,7 @@ def load_user(user_id):
 def logout():
     logout_user()
     flash('You have been logged out','warning')
-    return redirect(url_for('login'))
+    return redirect(url_for('display_blog'))
 #uploads
 @app.route('/')
 @app.route('/blog')
