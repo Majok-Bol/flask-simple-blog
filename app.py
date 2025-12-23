@@ -193,7 +193,7 @@ def create_blog_post():
 def download_file(name):
     path=os.path.join(app.config['UPLOAD_FOLDER'],name)
     if not os.path.exists(path):
-        abort(404)
+        flash('Image does not exist','danger')
     return send_from_directory(
         app.config['UPLOAD_FOLDER'],
         name,

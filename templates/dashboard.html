@@ -4,16 +4,23 @@
 <p>Welcome <strong>{{current_user.username}}</strong> to your dashboard</p>
 {%else%}
 <p>You are not logged in</p>
-{%endif%}
-{%if posts%}
+{%endif%} {%if posts%}
 <p>Total posts: {{posts|length}}</p>
 {%for post in posts%}
 <h2>Title: {{post.title}}</h2>
 <a href="{{url_for('edit_blog_post',blog_id=post.id)}}">Edit</a>
 <a href="{{url_for('delete_blog_post',blog_id=post.id)}}">Delete post</a>
-{%endfor%}
-{%endif%}
-
+{%endfor%} {%endif%}
+<a
+  href="{{url_for('create_blog_post')}}"
+  class="hover:text-blue-400 hover:underline cursor-pointer text-blue-400"
+  >Create post</a
+>
+<a
+  href="{{url_for('display_blog')}}"
+  class="hover:text-blue-400 hover:underline cursor-pointer text-blue-400"
+  >Blog posts</a
+>
 <a
   href="{{url_for('logout')}}"
   class="text-blue-800 underline hover:text-blue-400"
