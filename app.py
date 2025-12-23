@@ -112,7 +112,10 @@ def dashboard():
     # print("Posts: ",posts)
     # posts=Post.query.filter_by(user_id=current_user.id).all()
     return render_template('dashboard.html',posts=posts)
-
+#home page
+@app.route('/home',methods=['POST','GET'])
+def home():
+    return render_template('home.html')
 #handle prevent redirect attack
 def is_safe_url(target):
     ref_url=urlparse(request.host_url)
@@ -191,9 +194,6 @@ def create_blog_post():
 #serve images for download
 @app.route('/blog/<name>',methods=['POST','GET'])
 def download_file(name):
-    path=os.path.join(app.config['UPLOAD_FOLDER'],name)
-    if not os.path.exists(path):
-        flash('Image does not exist','danger')
     return send_from_directory(
         app.config['UPLOAD_FOLDER'],
         name,

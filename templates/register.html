@@ -9,53 +9,49 @@
   >
     <div class="flex flex-col items-center justify-center">
       {{form.hidden_tag()}}
-      <div class="flash flex flex-col relative items-center justify-center m-1 w-full ">
+      <div
+        class="flash flex flex-col relative items-center justify-center m-1 w-full"
+      >
         {{form.username.label}}{{form.username(class='border border-gray-400
         outline:none focus:outline-none focus:ring-2 focus:ring-blue-400
         rounded-[6px] p-1 m-1',placeholder='Enter your name')}}
         <div class="min-h-[1.5rem]">
-     {%for error in
-        form.username.errors%}
-        <p class="flash-msg  text-red-600 ">{{error}}</p>
-        {%endfor%}
+          {%for error in form.username.errors%}
+          <p class="flash-msg text-red-600">{{error}}</p>
+          {%endfor%}
         </div>
-      
-    
       </div>
-      <div class="flash flex flex-col relative items-center justify-center m-1 w-full ">
+      <div
+        class="flash flex flex-col relative items-center justify-center m-1 w-full"
+      >
         {{form.email.label}}{{form.email(class='border border-gray-400
         outline:none focus:outline-none focus:ring-2 focus:ring-blue-400
         rounded-[6px] p-1 m-1',placeholder='Enter your email')}}
-        
+
         <div class="min-h-[1.5rem]">
-              {%for error in
-        form.email.errors%}
-        <p  class="flash-msg  text-red-600">{{error}}</p>
-        {%endfor%}
+          {%for error in form.email.errors%}
+          <p class="flash-msg text-red-600">{{error}}</p>
+          {%endfor%}
         </div>
-    
       </div>
       <div class="flex flex-col items-center justify-center m-1">
         {{form.password.label}}{{form.password(class='border border-gray-400
         outline:none focus:outline-none focus:ring-2 focus:ring-blue-400
         rounded-[6px] p-1 m-1')}}
-                 <div class="min-h-[1.5rem]">
-              {%for error in
-        form.password.errors%}
-        <p  class="flash-msg  text-red-600">{{error}}</p>
-        {%endfor%}
+        <div class="min-h-[1.5rem]">
+          {%for error in form.password.errors%}
+          <p class="flash-msg text-red-600">{{error}}</p>
+          {%endfor%}
         </div>
-
       </div>
       <div class="flex flex-col items-center justify-center m-1">
         {{form.confirm_password.label}}{{form.confirm_password(class='border
         border-gray-400 outline:none focus:outline-none focus:ring-2
         focus:ring-blue-400 rounded-[6px] p-1 m-1')}}
-             <div class="min-h-[1.5rem]">
-              {%for error in
-        form.confirm_password.errors%}
-        <p  class="flash-msg  text-red-600">{{error}}</p>
-        {%endfor%}
+        <div class="min-h-[1.5rem]">
+          {%for error in form.confirm_password.errors%}
+          <p class="flash-msg text-red-600">{{error}}</p>
+          {%endfor%}
         </div>
       </div>
       <div class="flex flex-col items-center justify-center m-1">
@@ -72,6 +68,13 @@
       >Login</a
     >
   </p>
+  <div>
+    <a
+      href="{{url_for('home')}}"
+      class="cursor-pointer hover:text-blue-400 hover:underline underline text-blue-800"
+      >Home</a
+    >
+  </div>
 </div>
 
 {% endblock %}

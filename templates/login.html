@@ -1,9 +1,7 @@
 {% extends 'base_plain.html' %} {% block title%}
 <title>Register page</title>
 
-{% endblock %}
-
- {% block body %}
+{% endblock %} {% block body %}
 <div class="flex flex-col items-center justify-center min-h-screen">
   <form
     method="post"
@@ -15,11 +13,10 @@
         {{form.username.label}}{{form.username(class='border border-gray-400
         outline:none focus:outline-none focus:ring-2 focus:ring-blue-400
         rounded-[6px] p-1 m-1',placeholder='Enter your name')}}
-       <div class="min-h-[1.5rem]">
-     {%for error in
-        form.username.errors%}
-        <p class="flash-msg  text-red-600 ">{{error}}</p>
-        {%endfor%}
+        <div class="min-h-[1.5rem]">
+          {%for error in form.username.errors%}
+          <p class="flash-msg text-red-600">{{error}}</p>
+          {%endfor%}
         </div>
       </div>
       <div class="flash flex flex-col items-center justify-center m-1">
@@ -27,13 +24,14 @@
         outline:none focus:outline-none focus:ring-2 focus:ring-blue-400
         rounded-[6px] p-1 m-1')}}
         <div class="min-h-[1.5rem]">
-     {%for error in
-        form.password.errors%}
-        <p class="flash-msg  text-red-600 ">{{error}}</p>
-        {%endfor%}
+          {%for error in form.password.errors%}
+          <p class="flash-msg text-red-600">{{error}}</p>
+          {%endfor%}
         </div>
       </div>
-<div  class="flex  items-center justify-center m-1">{{form.remember_me.label}}{{form.remember_me(class='w-10 h-4')}}</div>
+      <div class="flex items-center justify-center m-1">
+        {{form.remember_me.label}}{{form.remember_me(class='w-10 h-4')}}
+      </div>
       <div class="flex flex-col items-center justify-center m-1">
         {{form.submit( class='cursor-pointer bg-green-600 text-white w-60
         h-[30px] rounded-[20px]')}}
@@ -48,6 +46,13 @@
       >Register</a
     >
   </p>
+  <div>
+    <a
+      href="{{url_for('display_blog')}}"
+      class="cursor-pointer hover:text-blue-400 hover:underline underline text-blue-800"
+      >Home</a
+    >
+  </div>
 </div>
 
 {% endblock %}
