@@ -133,19 +133,19 @@ def load_user(user_id):
 def logout():
     logout_user()
     flash('You have been logged out','warning')
-    return redirect(url_for('display_blog'))
+    return redirect(url_for('display_posts'))
 #uploads
 @app.route('/')
-@app.route('/blog')
-def display_blog():
+@app.route('/posts')
+def display_posts():
     #get uploads
     posts=Post.query.all()
     # print("Uploads: ",uploads)
-    return render_template('blog.html',posts=posts)
+    return render_template('posts.html',posts=posts)
 #post route
-@app.route('/create_blog',methods=['POST','GET'])
+@app.route('/create_post',methods=['POST','GET'])
 @login_required
-def create_blog_post():
+def create_post():
     #create instance of post form
     post=PostForm()
     if post.validate_on_submit():
@@ -188,11 +188,11 @@ def create_blog_post():
         flash('Post created successfully','success')
         return redirect(url_for('display_blog'))
         # return render_template('create_post.html',post=post)
-    return render_template('create_blog.html',post=post)
+    return render_template('create_post.html',post=post)
     
 
 #serve images for download
-@app.route('/blog/<name>',methods=['POST','GET'])
+@app.route('/post/<name>',methods=['POST','GET'])
 def download_file(name):
     return send_from_directory(
         app.config['UPLOAD_FOLDER'],
@@ -202,9 +202,9 @@ def download_file(name):
         download_name=name
         )
 #edit post
-@app.route('/edit/<int:blog_id>',methods=['POST','GET'])
+@app.route('/edit/<int:post_id>',methods=['POST','GET'])
 @login_required
-def edit_blog_post(blog_id):
+def edit_post(post_id):
     #get the post to delete
     post=Post.query.get_or_404(blog_id)
     # print("Posts: ",post)
@@ -262,12 +262,12 @@ def edit_blog_post(blog_id):
         form.title.data=post.title
         form.content.data=post.content    
     
-    return render_template('edit_blog.html',post=post,form=form)
+    return render_template('edit_post.html',post=post,form=form)
 
 #delete post
-@app.route('/delete/<int:blog_id>',methods=['POST','GET'])
+@app.route('/delete/<int:post_id>',methods=['POST','GET'])
 @login_required
-def delete_blog_post(blog_id):
+def delete_post(post_id):
     #get the post
     post=Post.query.get_or_404(blog_id)
     if post.user_id!=current_user.id:
@@ -279,7 +279,7 @@ def delete_blog_post(blog_id):
     #save changes to the database
     db.session.commit()
     flash("Post delete successfully","success")
-    return redirect(url_for('display_blog'))
+    return redirect(url_for('display_posts'))
 #registration form
 class RegisterForm(FlaskForm):
     username=StringField('Username',validators=[InputRequired(),Length(min=4,max=50)])
