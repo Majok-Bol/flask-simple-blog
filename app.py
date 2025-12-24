@@ -132,7 +132,7 @@ def load_user(user_id):
 @login_required
 def logout():
     logout_user()
-    flash('You have been logged out','warning')
+
     return redirect(url_for('display_posts'))
 #uploads
 @app.route('/')
@@ -149,10 +149,23 @@ def create_post():
     #create instance of post form
     post=PostForm()
     if post.validate_on_submit():
+        title=post.title.data.strip()
+        content=post.content.data.strip()
+        has_error=False
+        if not title:
+            # flash('Title cannot be empty if content is provided','danger')
+            post.title.errors.append('Title cannot be empty if content is provided')
+            has_error=True
+        if not content:
+            # flash('Content cannot be empty if title is provided','danger')
+            post.title.errors.append('Content cannot be empty if title is provided')
+            has_error=True
+        if has_error:
+            return render_template('create_post.html',post=post)
         #save first post,  image is optional
         new_post=Post(
-            title=post.title.data,
-            content=post.content.data,
+            title=title,
+            content=content,
             user_id=current_user.id
 
         )
@@ -186,13 +199,18 @@ def create_post():
             #commit changes
             db.session.commit()
         flash('Post created successfully','success')
-        return redirect(url_for('display_blog'))
+        return redirect(url_for('display_posts'))
         # return render_template('create_post.html',post=post)
     return render_template('create_post.html',post=post)
     
+#display images
+@app.route('/uploads/<filename>')
+def show_image(filename):
+    return send_from_directory(app.config['UPLOAD_FOLDER'], filename)
 
 #serve images for download
 @app.route('/post/<name>',methods=['POST','GET'])
+
 def download_file(name):
     return send_from_directory(
         app.config['UPLOAD_FOLDER'],
@@ -201,12 +219,13 @@ def download_file(name):
         #download name same as filename
         download_name=name
         )
+
 #edit post
 @app.route('/edit/<int:post_id>',methods=['POST','GET'])
 @login_required
 def edit_post(post_id):
     #get the post to delete
-    post=Post.query.get_or_404(blog_id)
+    post=Post.query.get_or_404(post_id)
     # print("Posts: ",post)
     # print("Posts image: ",post.images)
     if post.user_id!=current_user.id:
@@ -269,7 +288,7 @@ def edit_post(post_id):
 @login_required
 def delete_post(post_id):
     #get the post
-    post=Post.query.get_or_404(blog_id)
+    post=Post.query.get_or_404(post_id)
     if post.user_id!=current_user.id:
         flash("You cannot delete this post","danger")
         return redirect(url_for('dashboard'))
@@ -279,10 +298,7 @@ def delete_post(post_id):
     #save changes to the database
     db.session.commit()
     flash("Post delete successfully","success")
-    return redirect(url_for('display_posts'))
-@app.route('/uploads/<filename>')
-def show_image(filename):
-    return send_from_directory(app.config['UPLOAD_FOLDER'], filename)
+    return redirect(url_for('dashboard'))
 
 #registration form
 class RegisterForm(FlaskForm):

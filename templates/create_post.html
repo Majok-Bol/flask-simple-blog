@@ -1,33 +1,30 @@
-
-{%extends 'base.html'%}
-{%block title%}<title>Create Post</title>{%endblock%}
+{%extends 'base.html'%} {%block title%}<title>Create Post</title>{%endblock%}
 {%block body%}
 <h1>Blog post</h1>
 <form enctype="multipart/form-data" method="post">
-    {{post.hidden_tag()}}
-    <div>
-{{post.title.label}}
-{{post.title()}}
-    </div>
-     <div>
-        {{post.image.label}}
-        {{post.image()}}
-    </div>
-     <div>
-        {{post.content.label}}
-        {{post.content()}}
-        
-    </div>
-     <div>
-        {{post.submit()}}
-        
-    </div>
- 
+  {{post.hidden_tag()}}
+  <div>{{post.title.label}} {{post.title()}}</div>
+  {%if post.title.errors%} {%for error in post.title.errors%}
+  <p class="error">{{error}}</p>
+  {%endfor%} {%endif%}
+  <div>{{post.image.label}} {{post.image()}}</div>
+  <div>{{post.content.label}} {{post.content()}}
 
+     {%if post.content.errors%} {%for
+    error in post.content.errors%}
+    <p class="error">{{error}}</p>
+    {%endfor%} {%endif%}
+
+  </div>
+
+   
+
+
+  <div>{{post.submit()}}</div>
 </form>
-   <a
-          href="{{url_for('home')}}"
-          class="hover:text-blue-400 hover:underline cursor-pointer text-blue-400"
-          >Home</a
-        >
+<a
+  href="{{url_for('home')}}"
+  class="hover:text-blue-400 hover:underline cursor-pointer text-blue-400"
+  >Home</a
+>
 {%endblock%}
