@@ -194,12 +194,6 @@ def create_blog_post():
 #serve images for download
 @app.route('/blog/<name>',methods=['POST','GET'])
 def download_file(name):
-<<<<<<< HEAD
-=======
-    path=os.path.join(app.config['UPLOAD_FOLDER'],name)
-    if not os.path.exists(path):
-        abort(404)
->>>>>>> parent of 579bb11 (updated dashboard)
     return send_from_directory(
         app.config['UPLOAD_FOLDER'],
         name,

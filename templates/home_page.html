@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+        <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body>
+    <main>
+         <nav>
+      
+        <a
+          href="{{url_for('home')}}"
+          class="hover:text-blue-400 hover:underline cursor-pointer text-blue-400"
+          >Home</a
+        >
+         
+        <a
+          href="{{url_for('display_blog')}}"
+          class="hover:text-blue-400 hover:underline cursor-pointer text-blue-400"
+          >Posts</a
+        >
+             <a
+          href="{{url_for('create_blog_post')}}"
+          class="hover:text-blue-400 hover:underline cursor-pointer text-blue-400"
+          >Create post</a
+        >
+        <a
+          href="{{url_for('dashboard')}}"
+          class="hover:text-blue-400 hover:underline cursor-pointer text-blue-400"
+          >Dashboard</a
+        >
+      </nav>
+{%block body%}{%endblock%}
+    </main>
+    
+</body>
+  <script>
+    const messages = document.querySelectorAll(".flash-msg");
+    messages.forEach((msg) => {
+      setTimeout(() => {
+        msg.remove();
+      },5000);
+    });
+  </script>
+</html>
