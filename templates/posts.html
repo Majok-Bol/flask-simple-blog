@@ -4,10 +4,10 @@
   <h2>{{post.title}}</h2>
   {%endif%} {%if post.images%} {%for image in post.images%}
 
-  <img
-    src="{{url_for('download_file',name=image.filename)}}"
-    alt="uploaded image"
-  />
+ <img
+    src="{{ url_for('show_image', filename=image.filename) }}"
+    alt="Post image"/>
+  <a href="{{url_for('download_file',name=image.filename)}}" download>Download</a>
 
   {%endfor%} {%endif%} {%if post.content%} 
   <p>{{post.content}}</p>

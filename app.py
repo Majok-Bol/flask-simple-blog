@@ -280,6 +280,10 @@ def delete_post(post_id):
     db.session.commit()
     flash("Post delete successfully","success")
     return redirect(url_for('display_posts'))
+@app.route('/uploads/<filename>')
+def show_image(filename):
+    return send_from_directory(app.config['UPLOAD_FOLDER'], filename)
+
 #registration form
 class RegisterForm(FlaskForm):
     username=StringField('Username',validators=[InputRequired(),Length(min=4,max=50)])
