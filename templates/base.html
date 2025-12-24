@@ -8,16 +8,7 @@
   </head>
   <body>
     <main>
-      <div class="flash fixed top-20 left-1/2 -translate-x-1/2 z-50">
-        {%with messages=get_flashed_messages(with_categories=true)%} {%if
-        messages%} {%for category,message in messages%}
-        <div
-          class="flash-msg {%if category=='success'%} text-green-600 {%elif category=='info'%} text-blue-700 flex flex-row justify-center items-center relative {%elif category=='warning'%} text-yellow-400 {%else%} text-gray-500 {%endif%}"
-        >
-          {{message}}
-        </div>
-        {%endfor%} {%endif%} {%endwith%}
-      </div>
+ 
       {%block body%}{%endblock%}
     </main>
   </body>

@@ -1,26 +1,53 @@
 {%extends 'base_post.html'%} {%block body%} {%if posts%} {%for post in posts%}
 <article>
   {%if post.title%}
-  <h2>{{post.title}}</h2>
+  <h2>{{post.title|e}}</h2>
   {%endif%} {%if post.images%} {%for image in post.images%}
 
- <img
+  <img
     src="{{ url_for('show_image', filename=image.filename) }}"
-    alt="Post image"/>
-  <a href="{{url_for('download_file',name=image.filename)}}" download><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
-  <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5M16.5 12 12 16.5m0 0L7.5 12m4.5 4.5V3" />
-</svg>
-</a>
+    alt="Post image"
+  />
+  <a href="{{url_for('download_file',name=image.filename)}}" download
+    ><svg
+      xmlns="http://www.w3.org/2000/svg"
+      fill="none"
+      viewBox="0 0 24 24"
+      stroke-width="1.5"
+      stroke="currentColor"
+      class="size-6"
+    >
+      <path
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5M16.5 12 12 16.5m0 0L7.5 12m4.5 4.5V3"
+      />
+    </svg>
+  </a>
 
-  {%endfor%} {%endif%} {%if post.content%} 
-  <p>{{post.content}}</p>
+  {%endfor%} {%endif%} {%if post.content%}
+  <pre class="white-space-pre-wrap">{{post.content|e}}</pre>
 
   {%endif%}
 </article>
-{%endfor%} {%endif%}
+{%endfor%} {%else%}
+<p class="text-gray-500 m-10">No posts uploaded yet</p>
+
+{%endif%}
+<div>
+<a
+  href="{{url_for('create_post')}}"
+  class="hover:text-blue-400 hover:underline cursor-pointer text-blue-800"
+  >Create post</a
+>
+</div>
+<div>
   <a
-    href="{{url_for('home')}}"
-    class="cursor-pointer hover:text-blue-400 hover:underline underline text-blue-800"
-    >Home</a
-  >
- {%endblock%}
+  href="{{url_for('home')}}"
+  class="cursor-pointer hover:text-blue-400 hover:underline underline text-blue-800"
+  >Home</a
+>
+</div>
+
+
+{%endblock%}

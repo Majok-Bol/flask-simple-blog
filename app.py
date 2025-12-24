@@ -151,17 +151,17 @@ def create_post():
     if post.validate_on_submit():
         title=post.title.data.strip()
         content=post.content.data.strip()
-        has_error=False
-        if not title:
-            # flash('Title cannot be empty if content is provided','danger')
-            post.title.errors.append('Title cannot be empty if content is provided')
-            has_error=True
-        if not content:
-            # flash('Content cannot be empty if title is provided','danger')
-            post.title.errors.append('Content cannot be empty if title is provided')
-            has_error=True
-        if has_error:
-            return render_template('create_post.html',post=post)
+        if not title and not content:
+          post.title.errors.append("Title cannot be empty")
+          post.content.errors.append("Content cannot be empty")
+          return render_template("create_post.html", post=post)
+        if title and not content:
+          post.content.errors.append("Content is required when title is provided")
+          return render_template("create_post.html", post=post)
+        if content and not title:
+          post.title.errors.append("Title is required when content is provided")
+          return render_template("create_post.html", post=post)
+        
         #save first post,  image is optional
         new_post=Post(
             title=title,
@@ -198,7 +198,7 @@ def create_post():
             db.session.add(post_image)
             #commit changes
             db.session.commit()
-        flash('Post created successfully','success')
+        # flash('Post created successfully','success')
         return redirect(url_for('display_posts'))
         # return render_template('create_post.html',post=post)
     return render_template('create_post.html',post=post)
@@ -337,7 +337,7 @@ class RegisterForm(FlaskForm):
 class PostForm(FlaskForm):
     title=StringField('Title')
     image=FileField('Image(optional)',validators=[FileAllowed(ALLOWED_EXTENSIONS,message='Only images are allowed')])
-    content=StringField('Content')
+    content=TextAreaField('Content')
     submit=SubmitField('Create post')
 
 

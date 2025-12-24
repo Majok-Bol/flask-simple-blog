@@ -1,27 +1,36 @@
 {%extends 'base.html'%} {%block title%}<title>Create Post</title>{%endblock%}
 {%block body%}
-<h1>Blog post</h1>
+<h1>Create post</h1>
+<div class="flex flex-col items-center justify-center">
 <form enctype="multipart/form-data" method="post">
+    <div>
   {{post.hidden_tag()}}
-  <div>{{post.title.label}} {{post.title()}}</div>
-  {%if post.title.errors%} {%for error in post.title.errors%}
-  <p class="error">{{error}}</p>
-  {%endfor%} {%endif%}
+  <div class="flex flex-col" >
+    {{post.title.label}} {{post.title(class='focus:outline-none outline-none border border-gray-700 rounded-[4px]')}}
+    <div>
+      {%if post.title.errors%} {%for error in post.title.errors%}
+      <p class="flash-msg text-red-600">{{error}}</p>
+      {%endfor%} {%endif%}
+    </div>
+  </div>
+  <br>
+
   <div>{{post.image.label}} {{post.image()}}</div>
-  <div>{{post.content.label}} {{post.content()}}
-
-     {%if post.content.errors%} {%for
-    error in post.content.errors%}
-    <p class="error">{{error}}</p>
-    {%endfor%} {%endif%}
-
+    <br>
+  <div class="flex flex-col">
+    {{post.content.label}} {{post.content(class='w-full min-h-[300px] resize-y outline:none focus:outline-none border border-gray-700')}}
+    <div>
+      {%if post.content.errors%} {%for error in post.content.errors%}
+      <p class="flash-msg text-red-600">{{error}}</p>
+      {%endfor%} {%endif%}
+    </div>
   </div>
 
-   
-
-
   <div>{{post.submit()}}</div>
+    </div>
+    </div>
 </form>
+</div>
 <a
   href="{{url_for('home')}}"
   class="hover:text-blue-400 hover:underline cursor-pointer text-blue-400"
