@@ -1,4 +1,4 @@
-{%extends 'home_page.html'%} {%block body%} {%if posts%} {%for post in posts%}
+{%extends 'base_blog.html'%} {%block body%} {%if posts%} {%for post in posts%}
 <article>
   {%if post.title%}
   <h2>{{post.title}}</h2>
@@ -14,4 +14,10 @@
 
   {%endif%}
 </article>
-{%endfor%} {%endif%} {%endblock%}
+{%endfor%} {%endif%}
+  <a
+    href="{{url_for('home')}}"
+    class="cursor-pointer hover:text-blue-400 hover:underline underline text-blue-800"
+    >Home</a
+  >
+ {%endblock%}

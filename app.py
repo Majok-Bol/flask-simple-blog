@@ -186,7 +186,7 @@ def create_blog_post():
             #commit changes
             db.session.commit()
         flash('Post created successfully','success')
-        return redirect(url_for('dashboard'))
+        return redirect(url_for('display_blog'))
         # return render_template('create_post.html',post=post)
     return render_template('create_blog.html',post=post)
     
