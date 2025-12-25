@@ -27,6 +27,8 @@ from PIL import Image
 import re
 #import os
 import os
+#use hashlib to hash passwords and emails
+import hashlib
 #initialize app with flask
 app=Flask(__name__)
 #initialize app with csrf protect
@@ -67,11 +69,13 @@ def register():
     form=RegisterForm()
     if form.validate_on_submit():
         #get user details
-        #hash use password
+        #hash user password
         #decode as string
         hashed_password=bcrypt.generate_password_hash(form.password.data).decode('utf-8')
+        #hash email address
+        hashed_email=hashlib.sha256(form.email.data.lower().encode()).hexdigest()
         #add user to database
-        user=User(username=form.username.data,email=form.email.data,password=hashed_password)
+        user=User(username=form.username.data,email=hashed_email,password=hashed_password)
         db.session.add(user)
         db.session.commit()
         flash('Account created successfully.Please login.','success')
@@ -114,8 +118,6 @@ def login():
 def dashboard():
     #get posts
     posts=Post.query.filter_by(user_id=current_user.id).all()
-    # print("Posts: ",posts)
-    # posts=Post.query.filter_by(user_id=current_user.id).all()
     return render_template('dashboard.html',posts=posts)
 #home page
 @app.route('/home',methods=['POST','GET'])
@@ -131,7 +133,7 @@ def is_safe_url(target):
 @login_manager.user_loader
 def load_user(user_id):
     #fetch current user 
-    return User.query.get(user_id)
+    return db.session.get(User,user_id)
 #logout user
 @app.route('/logout',methods=['POST','GET'])
 @login_required
@@ -174,7 +176,6 @@ def create_post():
         if title and has_image and not content:
           post.content.errors.append("Content is required when title is provided")
           return render_template('create_post.html',post=post,submit_label='Create post')
-
         #content and image,but no title
         if content and has_image and not title:
           post.content.errors.append("Content is required when title is provided")
@@ -197,7 +198,6 @@ def create_post():
             filename=secure_filename(post.image.data.filename)
             #check if folder does not exist
             if not os.path.exists(app.config['UPLOAD_FOLDER']):
-                # print('Folder does not exist: ',app.config['UPLOAD_FOLDER'])
                 #create folder
                 os.makedirs(app.config['UPLOAD_FOLDER'])
             #create image path
@@ -206,10 +206,6 @@ def create_post():
             img=Image.open(post.image.data)
             img.thumbnail((MAX_WIDTH,MAX_HEIGHT),Image.LANCZOS)
             img.save(image_path)
-            # print(f"Image path:{image_path}")
-            #save image path
-            # post.image.data.save(image_path)
-            #save to the database
             #create instance of image
             post_image=PostImage(
                     #filename
@@ -248,8 +244,6 @@ def download_file(name):
 def edit_post(post_id):
     #get the post to delete
     post=Post.query.get_or_404(post_id)
-    # print("Posts: ",post)
-    # print("Posts image: ",post.images)
     if post.user_id!=current_user.id:
         # flash('You are not allowed to edit this post','danger')
         #redirect to dashboard
@@ -260,33 +254,25 @@ def edit_post(post_id):
     #check if form is validated
     if form.validate_on_submit():
         updated=False
-        #get the title
         #check if title changed
         if form.title.data!=post.title:    
          post.title=form.title.data
          updated=True
-        #get the content
         #check if content changed
         if form.content.data!=post.content:
          post.content=form.content.data
-         updated=True
-        #save changes
-        # db.session.commit()       
+         updated=True     
         #handle image update
         if form.image.data:
             filename=secure_filename(form.image.data.filename)
-            # print("Filename: ",filename)
             #ensure folder exists
             if not os.path.exists(app.config['UPLOAD_FOLDER']):
                 os.makedirs(app.config['UPLOAD_FOLDER'])
             #get image path
             image_path=os.path.join(app.config['UPLOAD_FOLDER'],filename)
-            # print("File image edit path: ",image_path)
-            
             #check if post has image
             if post.images:
                 old_image=post.images[0]
-                # print("Image path: ",post.images[0])
                 #get old path
                 old_path=os.path.join(app.config['UPLOAD_FOLDER'],old_image.filename)
                 # print("Old path: ",old_path)
@@ -305,10 +291,6 @@ def edit_post(post_id):
         if updated:
         #save changes
          db.session.commit()
-        # flash('Post updated successfully','success')
-        # else:
-        #     flash('No changes made','danger')
-        
         return redirect(url_for('display_posts'))
      #prefill the form
     if request.method=='GET':
@@ -324,7 +306,6 @@ def delete_post(post_id):
     #get the post
     post=Post.query.get_or_404(post_id)
     if post.user_id!=current_user.id:
-        # flash("You cannot delete this post","danger")
         return redirect(url_for('dashboard'))
     #delete images from disk
     if post.images:
@@ -332,9 +313,6 @@ def delete_post(post_id):
             path=os.path.join(app.config['UPLOAD_FOLDER'],image.filename)
             if os.path.exists(path):
                 os.remove(path)
-
-    #if authorized to delete
-    #delete the post
     db.session.delete(post)
     #save changes to the database
     db.session.commit()
