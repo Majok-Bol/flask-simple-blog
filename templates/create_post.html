@@ -1,11 +1,20 @@
 {%extends 'base.html'%} {%block title%}<title>Create Post</title>{%endblock%}
 {%block body%}
-<h1 class="text-center m-4 font-semibold">Create post</h1>
+<header class="sticky top-0 w-full left-0 text-center bg-gray-700 text-white p-2">
+  <nav>
+        <a
+    href="{{url_for('home')}}"
+    class="hover:text-blue-400 hover:underline cursor-pointer"
+    >Home</a
+  >
+  </nav>
+</header>
+
 <div class="flex flex-col items-center justify-center">
-  <form enctype="multipart/form-data" method="post">
+  <form enctype="multipart/form-data" method="post" class="w-full">
     <div>
       {{post.hidden_tag()}}
-      <div class="flex flex-col">
+      <div class="flex flex-col m-2">
         <span class="font-semibold"> {{post.title.label}} </span>
         {{post.title(class='focus:outline-none focus:ring-2
         focus:ring-blue-500 outline-none border border-gray-700 rounded-[4px]
@@ -22,7 +31,7 @@
       <br />
 
       <div>
-        <span class="font-semibold"> {{post.image.label}}</span>
+        <span class="font-semibold m-2"> {{post.image.label}}</span>
         {{post.image()}}
 
         <div>
@@ -34,9 +43,9 @@
           </div>
         </div>
         <br />
-        <div class="flex flex-col">
+        <div class="flex flex-col m-2">
           <span class="font-semibold"> {{post.content.label}} </span>
-          {{post.content(class='w-full min-h-[300px] focus:ring-2
+          {{post.content(class='w-full min-h-[320px] focus:ring-2
           focus:ring-blue-500 resize-y outline:none focus:outline-none border
           border-gray-700 mt-2')}}
           <div>
@@ -51,18 +60,12 @@
 
         <div class="flex items-center justify-center m-2">
           {{post.submit(class='cursor-pointer text-white bg-blue-800
-          rounded-[4px] h-[30px] w-60',value=submit_label)}}
+          rounded-[4px] h-[30px] w-80',value=submit_label)}}
         </div>
       </div>
     </div>
   </form>
-  <div class="flex items-center justify-center m-2">
-    <a
-      href="{{url_for('home')}}"
-      class="hover:text-blue-400 hover:underline cursor-pointer text-blue-400"
-      >Home</a
-    >
-  </div>
+
 </div>
 
 {%endblock%}

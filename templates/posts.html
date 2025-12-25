@@ -22,13 +22,13 @@ class="cursor-pointer hover:text-blue-400 hover:underline underline"
 {%if posts%} {%for post in posts%}
 <article>
   {%if post.title%}
-  <h2>{{post.title|e}}</h2>
+  <h2 class="font-semibold text-medium uppercase m-1">{{post.title|e}}</h2>
   {%endif%} {%if post.images%} {%for image in post.images%}
 
   <img
     src="{{ url_for('show_image', filename=image.filename) }}"
     alt="Post image"
-    class="max-w-[400px] max-h-[300px] object-cover"
+    class="w-full  object-contain h-auto"
 
   />
   <a href="{{url_for('download_file',name=image.filename)}}" download
@@ -49,7 +49,10 @@ class="cursor-pointer hover:text-blue-400 hover:underline underline"
   </a>
 
   {%endfor%} {%endif%} {%if post.content%}
-  <pre class="white-space-pre-wrap">{{post.content|e}}</pre>
+  <div class="w-full px-1">
+  <pre class="whitespace-pre-wrap break-words font-normal leading-normal text-gray-900">{{post.content|e}}</pre>
+
+  </div>
 
   {%endif%}
 </article>

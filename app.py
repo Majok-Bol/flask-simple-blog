@@ -21,7 +21,8 @@ from urllib.parse import urlparse,urljoin
 from werkzeug.utils import secure_filename
 #import datetime
 from datetime import datetime
-from PIL import image
+#resize images with pillow
+from PIL import Image
 #import regex
 import re
 #import os
@@ -49,6 +50,9 @@ app.config['UPLOAD_FOLDER']=os.getenv('UPLOAD_FOLDER')
 # print('Folder path: ',app.config['UPLOAD_FOLDER'])
 #initializse app with database
 db=SQLAlchemy(app)
+#set maximum size for image
+MAX_WIDTH=800
+MAX_HEIGHT=600
 #initialize login manager
 #manage user sessions
 login_manager=LoginManager()
@@ -157,24 +161,24 @@ def create_post():
         if not title and not content and not has_image:
           post.title.errors.append("Provide a title and content or upload an image")
           post.content.errors.append("Provide a title and content or upload an image")
-          return render_template("create_post.html", post=post)
+          return render_template("create_post.html", post=post,submit_label='Create post')
         #title is given only
         if title and not content and not has_image:
           post.content.errors.append("Content is required when title is provided")
-          return render_template("create_post.html", post=post)
+          return render_template("create_post.html", post=post,submit_label='Create post')
         #content is given ony
         if content and not title and not has_image:
           post.title.errors.append("Title is required when content is provided")
-          return render_template("create_post.html", post=post)
+          return render_template("create_post.html", post=post,submit_label='Create post')
         #title and image,but no content
         if title and has_image and not content:
           post.content.errors.append("Content is required when title is provided")
-          return render_template("create_post.html", post=post)
+          return render_template('create_post.html',post=post,submit_label='Create post')
 
         #content and image,but no title
         if content and has_image and not title:
           post.content.errors.append("Content is required when title is provided")
-          return render_template("create_post.html", post=post)
+          return render_template('create_post.html',post=post,submit_label='Create post')
         
         #save first post,  image is optional
         new_post=Post(
@@ -198,9 +202,13 @@ def create_post():
                 os.makedirs(app.config['UPLOAD_FOLDER'])
             #create image path
             image_path=os.path.join(app.config['UPLOAD_FOLDER'],filename)
+            #resize image befor saving it
+            img=Image.open(post.image.data)
+            img.thumbnail((MAX_WIDTH,MAX_HEIGHT),Image.LANCZOS)
+            img.save(image_path)
             # print(f"Image path:{image_path}")
             #save image path
-            post.image.data.save(image_path)
+            # post.image.data.save(image_path)
             #save to the database
             #create instance of image
             post_image=PostImage(
@@ -251,10 +259,17 @@ def edit_post(post_id):
     form=PostForm()
     #check if form is validated
     if form.validate_on_submit():
+        updated=False
         #get the title
-        post.title=form.title.data
+        #check if title changed
+        if form.title.data!=post.title:    
+         post.title=form.title.data
+         updated=True
         #get the content
-        post.content=form.content.data
+        #check if content changed
+        if form.content.data!=post.content:
+         post.content=form.content.data
+         updated=True
         #save changes
         # db.session.commit()       
         #handle image update
@@ -286,17 +301,21 @@ def edit_post(post_id):
              db.session.add(new_image)
             #save path
             form.image.data.save(image_path)
+            updated=True
+        if updated:
         #save changes
-        db.session.commit()
+         db.session.commit()
         # flash('Post updated successfully','success')
+        else:
+            print('No changes made')
         
-        return redirect(url_for('dashboard'))
+        return redirect(url_for('display_posts'))
      #prefill the form
     if request.method=='GET':
         form.title.data=post.title
         form.content.data=post.content    
     
-    return render_template('edit_post.html',post=post,form=form,submit_label='Edit post')
+    return render_template('edit_post.html',post=post,form=form,submit_label='Update post')
 
 #delete post
 @app.route('/delete/<int:post_id>',methods=['POST','GET'])

@@ -10,33 +10,31 @@
   </nav>
 
 </header>
-<h1 class="text-center m-4 font-semibold">Edit post</h1>
-<div class="flex justify-center items-center flex-col">
-  <form enctype="multipart/form-data" method="post">
+
+<div class="flex justify-center items-center flex-col m-2">
+  <form enctype="multipart/form-data" method="post" class="w-full">
     <div>
       {{form.hidden_tag()}}
-      <div class="flex flex-col">
+      <div class="flex flex-col m-2">
         <span class="font-semibold"> {{form.title.label}} </span>
         {{form.title(class='outline-none focus:outline-none focus:ring-2
-        focus:ring-blue-500 border border-gray-700 mt-2 rounded-[4px]')}}
+        focus:ring-blue-500 border border-gray-700 mt-2 rounded-[4px] w-full')}}
       </div>
       {%if post.images%}
       <p>Current image:</p>
       <img src="{{url_for('show_image',filename=post.images[0].filename)}}"
         />
       <div>
-        <span> {{form.image.label}} </span>
+        <span class="font-semibold m-2"> {{form.image.label}} </span>
         {{form.image()}}
       </div>
       {%else%}
-      <div>{{form.image.label}} {{form.image()}}</div>
+      <div class="font-semibold m-2">{{form.image.label}} {{form.image()}}</div>
       {%endif%}
-      <div class="flex flex-col">
+      <div class="flex flex-col m-2">
         <span class="font-semibold"> {{form.content.label}} </span>
-      </div>
-      <div>
         {{form.content(class='outline-none focus:ring-2 focus:ring-blue-500
-        border border-gray-700 resize-y w-full min-h-[300px] mt-2')}}
+        border border-gray-700 resize-y w-full min-h-[320px] mt-2')}}
       </div>
 
       <div class="flex justify-center items-center m-2">
