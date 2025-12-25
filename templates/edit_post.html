@@ -24,7 +24,7 @@
       <p>Current image:</p>
       <img src="{{url_for('show_image',filename=post.images[0].filename)}}"
         />
-      <div>
+      <div class="m-2">
         <span class="font-semibold m-2"> {{form.image.label}} </span>
         {{form.image()}}
       </div>

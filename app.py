@@ -306,8 +306,8 @@ def edit_post(post_id):
         #save changes
          db.session.commit()
         # flash('Post updated successfully','success')
-        else:
-            print('No changes made')
+        # else:
+        #     flash('No changes made','danger')
         
         return redirect(url_for('display_posts'))
      #prefill the form
@@ -318,7 +318,7 @@ def edit_post(post_id):
     return render_template('edit_post.html',post=post,form=form,submit_label='Update post')
 
 #delete post
-@app.route('/delete/<int:post_id>',methods=['POST','GET'])
+@app.route('/delete/<int:post_id>',methods=['POST'])
 @login_required
 def delete_post(post_id):
     #get the post
@@ -326,6 +326,13 @@ def delete_post(post_id):
     if post.user_id!=current_user.id:
         # flash("You cannot delete this post","danger")
         return redirect(url_for('dashboard'))
+    #delete images from disk
+    if post.images:
+        for image in post.images:
+            path=os.path.join(app.config['UPLOAD_FOLDER'],image.filename)
+            if os.path.exists(path):
+                os.remove(path)
+
     #if authorized to delete
     #delete the post
     db.session.delete(post)
