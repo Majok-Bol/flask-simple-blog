@@ -29,6 +29,8 @@ import re
 import os
 #use hashlib to hash passwords and emails
 import hashlib
+#user uuid for user id
+import uuid 
 #initialize app with flask
 app=Flask(__name__)
 #initialize app with csrf protect
@@ -239,7 +241,7 @@ def download_file(name):
         )
 
 #edit post
-@app.route('/edit/<int:post_id>',methods=['POST','GET'])
+@app.route('/edit/<string:post_id>',methods=['POST','GET'])
 @login_required
 def edit_post(post_id):
     #get the post to delete
@@ -300,7 +302,7 @@ def edit_post(post_id):
     return render_template('edit_post.html',post=post,form=form,submit_label='Update post')
 
 #delete post
-@app.route('/delete/<int:post_id>',methods=['POST'])
+@app.route('/delete/<string:post_id>',methods=['POST'])
 @login_required
 def delete_post(post_id):
     #get the post
@@ -370,13 +372,13 @@ class LoginForm(FlaskForm):
 
 #create user model
 class User(db.Model,UserMixin):
-    id=db.Column(db.Integer,primary_key=True)
+    id=db.Column(db.String(36),primary_key=True,default=lambda:str(uuid.uuid4()))
     username=db.Column(db.String(36),nullable=False)
     email=db.Column(db.String(50),nullable=False)
     password=db.Column(db.String(255),nullable=False)
 #create a database model for post table
 class Post(db.Model):
-    id=db.Column(db.Integer,primary_key=True)
+    id=db.Column(db.String(36),primary_key=True,default=lambda:str(uuid.uuid4()))
     #post title
     title=db.Column(db.String(36),nullable=True)
     #content
@@ -389,7 +391,7 @@ class Post(db.Model):
     images=db.relationship('PostImage',backref='post',lazy=True)
 #create database table for image uploaded
 class PostImage(db.Model):
-    id=db.Column(db.Integer,primary_key=True)
+    id=db.Column(db.String(36),primary_key=True,default=lambda:str(uuid.uuid4()))
     #filename for image
     filename=db.Column(db.String(36))
     #link image to the post table
