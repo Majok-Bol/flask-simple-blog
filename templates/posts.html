@@ -28,6 +28,8 @@ class="cursor-pointer hover:text-blue-400 hover:underline underline"
   <img
     src="{{ url_for('show_image', filename=image.filename) }}"
     alt="Post image"
+    class="max-w-[400px] max-h-[300px] object-cover"
+
   />
   <a href="{{url_for('download_file',name=image.filename)}}" download
     ><svg

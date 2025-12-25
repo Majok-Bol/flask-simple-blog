@@ -22,7 +22,8 @@
       </div>
       {%if post.images%}
       <p>Current image:</p>
-      <img src="{{url_for('show_image',filename=post.images[0].filename)}}" />
+      <img src="{{url_for('show_image',filename=post.images[0].filename)}}"
+        />
       <div>
         <span> {{form.image.label}} </span>
         {{form.image()}}

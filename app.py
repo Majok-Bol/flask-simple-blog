@@ -21,6 +21,7 @@ from urllib.parse import urlparse,urljoin
 from werkzeug.utils import secure_filename
 #import datetime
 from datetime import datetime
+from PIL import image
 #import regex
 import re
 #import os
