@@ -1,43 +1,45 @@
-{%extends 'base.html'%}
+{%extends 'base.html'%} {%block title%} <title>Edit post</title>{%endblock%}
 {%block body%}
-<form enctype="multipart/form-data" method="post">
-    {{form.hidden_tag()}}
-    <div>
-{{form.title.label}}
-{{form.title()}}
-
-    </div>
-     <div>
-        {{form.content.label}}
-      
-        
-    </div>
-     <div>
-          {{form.content()}}
-    </div>
-    {%if post.images%}
-    <p>Current image:</p>
-    <img src="{{url_for('download_file',name=post.images[0].filename)}}"/>
-     <div>
-        {{form.image.label}}
-        {{form.image()}}
-    </div>
-    {%else%}
-     <div>
-        {{form.image.label}}
-        {{form.image()}}
-    </div>
-    {%endif%}
-  
-     
-  <div>
-        {{form.submit()}}
-        
-    </div>
-</form>
+<header>
   <a
-          href="{{url_for('home')}}"
-          class="hover:text-blue-400 hover:underline cursor-pointer text-blue-400"
-          >Home</a
-        >
+    href="{{url_for('home')}}"
+    class="hover:text-blue-400 hover:underline cursor-pointer text-blue-400"
+    >Home</a
+  >
+</header>
+<div class="flex justify-center items-center flex-col">
+  <form enctype="multipart/form-data" method="post">
+    <div>
+      {{form.hidden_tag()}}
+      <div class="flex flex-col">
+        <span class="font-semibold"> {{form.title.label}} </span>
+        {{form.title(class='outline-none focus:outline-none focus:ring-2
+        focus:ring-blue-500 border border-gray-700 mt-2 rounded-[4px]')}}
+      </div>
+      {%if post.images%}
+      <p>Current image:</p>
+      <img src="{{url_for('show_image',filename=post.images[0].filename)}}" />
+      <div>
+        <span> {{form.image.label}} </span>
+        {{form.image()}}
+      </div>
+      {%else%}
+      <div>{{form.image.label}} {{form.image()}}</div>
+      {%endif%}
+      <div class="flex flex-col">
+        <span class="font-semibold"> {{form.content.label}} </span>
+      </div>
+      <div>
+        {{form.content(class='outline-none focus:ring-2 focus:ring-blue-500
+        border border-gray-700 resize-y w-full min-h-[300px] mt-2')}}
+      </div>
+
+      <div class="flex justify-center items-center m-2">
+        {{form.submit(class='text-center w-60 h-[30px] border rounded-[4px]
+        bg-blue-800 text-white cursor-pointer')}}
+      </div>
+    </div>
+  </form>
+</div>
+
 {%endblock%}
