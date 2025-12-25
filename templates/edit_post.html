@@ -1,12 +1,16 @@
 {%extends 'base.html'%} {%block title%} <title>Edit post</title>{%endblock%}
 {%block body%}
-<header>
-  <a
+<header class="sticky top-0 left-0 w-full bg-gray-800 text-white p-4 text-center z-50">
+  <nav>
+    <a
     href="{{url_for('home')}}"
-    class="hover:text-blue-400 hover:underline cursor-pointer text-blue-400"
+    class="hover:text-blue-400 hover:underline cursor-pointer"
     >Home</a
   >
+  </nav>
+
 </header>
+<h1 class="text-center m-4 font-semibold">Edit post</h1>
 <div class="flex justify-center items-center flex-col">
   <form enctype="multipart/form-data" method="post">
     <div>
@@ -36,7 +40,7 @@
 
       <div class="flex justify-center items-center m-2">
         {{form.submit(class='text-center w-60 h-[30px] border rounded-[4px]
-        bg-blue-800 text-white cursor-pointer')}}
+        bg-blue-900 text-white cursor-pointer',value=submit_label)}}
       </div>
     </div>
   </form>

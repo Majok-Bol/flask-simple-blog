@@ -214,7 +214,7 @@ def create_post():
         # flash('Post created successfully','success')
         return redirect(url_for('display_posts'))
         # return render_template('create_post.html',post=post)
-    return render_template('create_post.html',post=post)
+    return render_template('create_post.html',post=post,submit_label='Create post')
     
 #display images
 @app.route('/uploads/<filename>')
@@ -288,13 +288,14 @@ def edit_post(post_id):
         #save changes
         db.session.commit()
         # flash('Post updated successfully','success')
+        
         return redirect(url_for('dashboard'))
      #prefill the form
     if request.method=='GET':
         form.title.data=post.title
         form.content.data=post.content    
     
-    return render_template('edit_post.html',post=post,form=form)
+    return render_template('edit_post.html',post=post,form=form,submit_label='Edit post')
 
 #delete post
 @app.route('/delete/<int:post_id>',methods=['POST','GET'])
