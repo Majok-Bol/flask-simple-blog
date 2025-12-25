@@ -229,7 +229,7 @@ def edit_post(post_id):
     # print("Posts: ",post)
     # print("Posts image: ",post.images)
     if post.user_id!=current_user.id:
-        flash('You are not allowed to edit this post','danger')
+        # flash('You are not allowed to edit this post','danger')
         #redirect to dashboard
         return redirect(url_for('dashboard'))
     #if valid
@@ -274,7 +274,7 @@ def edit_post(post_id):
             form.image.data.save(image_path)
         #save changes
         db.session.commit()
-        flash('Post updated successfully','success')
+        # flash('Post updated successfully','success')
         return redirect(url_for('dashboard'))
      #prefill the form
     if request.method=='GET':
@@ -290,14 +290,14 @@ def delete_post(post_id):
     #get the post
     post=Post.query.get_or_404(post_id)
     if post.user_id!=current_user.id:
-        flash("You cannot delete this post","danger")
+        # flash("You cannot delete this post","danger")
         return redirect(url_for('dashboard'))
     #if authorized to delete
     #delete the post
     db.session.delete(post)
     #save changes to the database
     db.session.commit()
-    flash("Post delete successfully","success")
+    # flash("Post delete successfully","success")
     return redirect(url_for('dashboard'))
 
 #registration form
@@ -336,7 +336,7 @@ class RegisterForm(FlaskForm):
 #form for creating post
 class PostForm(FlaskForm):
     title=StringField('Title')
-    image=FileField('Image(optional)',validators=[FileAllowed(ALLOWED_EXTENSIONS,message='Only images are allowed')])
+    image=FileField('Image(optional)',validators=[FileAllowed(ALLOWED_EXTENSIONS,message='Only JPG or PNG images are allowed')])
     content=TextAreaField('Content')
     submit=SubmitField('Create post')
 
