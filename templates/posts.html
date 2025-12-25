@@ -1,4 +1,25 @@
-{%extends 'base_post.html'%} {%block body%} {%if posts%} {%for post in posts%}
+{%extends 'base_post.html'%}
+
+{%block body%}
+<header class="sticky top-0 left-0 w-full bg-gray-700 text-white z-50 p-4">
+  <nav class="flex items-center gap-10">
+<div>
+<a
+  href="{{url_for('create_post')}}"
+class="cursor-pointer hover:text-blue-400 hover:underline underline"
+  >Create post</a
+>
+</div>
+<div>
+  <a
+  href="{{url_for('home')}}"
+  class="cursor-pointer hover:text-blue-400 hover:underline underline"
+  >Home</a
+>
+</div>
+  </nav>
+</header>
+{%if posts%} {%for post in posts%}
 <article>
   {%if post.title%}
   <h2>{{post.title|e}}</h2>
@@ -34,20 +55,7 @@
 <p class="text-gray-500">No posts uploaded yet</p>
 
 {%endif%}
-<div>
-<a
-  href="{{url_for('create_post')}}"
-  class="hover:text-blue-400 hover:underline cursor-pointer text-blue-800"
-  >Create post</a
->
-</div>
-<div>
-  <a
-  href="{{url_for('home')}}"
-  class="cursor-pointer hover:text-blue-400 hover:underline underline text-blue-800"
-  >Home</a
->
-</div>
+
 
 
 {%endblock%}

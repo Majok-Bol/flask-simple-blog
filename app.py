@@ -151,21 +151,34 @@ def create_post():
     if post.validate_on_submit():
         title=post.title.data.strip()
         content=post.content.data.strip()
-        if not title and not content:
-          post.title.errors.append("Title cannot be empty")
-          post.content.errors.append("Content cannot be empty")
+        has_image=bool(post.image.data)
+        #nothing is provided
+        if not title and not content and not has_image:
+          post.title.errors.append("Provide a title and content or upload an image")
+          post.content.errors.append("Provide a title and content or upload an image")
           return render_template("create_post.html", post=post)
-        if title and not content:
+        #title is given only
+        if title and not content and not has_image:
           post.content.errors.append("Content is required when title is provided")
           return render_template("create_post.html", post=post)
-        if content and not title:
+        #content is given ony
+        if content and not title and not has_image:
           post.title.errors.append("Title is required when content is provided")
+          return render_template("create_post.html", post=post)
+        #title and image,but no content
+        if title and has_image and not content:
+          post.content.errors.append("Content is required when title is provided")
+          return render_template("create_post.html", post=post)
+
+        #content and image,but no title
+        if content and has_image and not title:
+          post.content.errors.append("Content is required when title is provided")
           return render_template("create_post.html", post=post)
         
         #save first post,  image is optional
         new_post=Post(
-            title=title,
-            content=content,
+            title=title if title else None,
+            content=content if content else None,
             user_id=current_user.id
 
         )
@@ -359,9 +372,9 @@ class User(db.Model,UserMixin):
 class Post(db.Model):
     id=db.Column(db.Integer,primary_key=True)
     #post title
-    title=db.Column(db.String(36))
+    title=db.Column(db.String(36),nullable=True)
     #content
-    content=db.Column(db.Text)
+    content=db.Column(db.Text,nullable=True)
     #link post to a user
     user_id=db.Column(db.Integer,db.ForeignKey('user.id'))
     #date created
