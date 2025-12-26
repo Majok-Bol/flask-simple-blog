@@ -33,6 +33,8 @@ import hashlib
 import uuid 
 #use json
 from flask import jsonify
+#eager load images
+from sqlalchemy.orm import joinedload
 #initialize app with flask
 app=Flask(__name__)
 #initialize app with csrf protect
@@ -143,14 +145,20 @@ def load_user(user_id):
 @login_required
 def logout():
     logout_user()
-
     return redirect(url_for('display_posts'))
 #uploads
 @app.route('/')
 @app.route('/posts')
 def display_posts():
     #get uploads
-    posts=Post.query.all()
+    posts=(
+        Post.query
+        .options(joinedload(Post.images))
+        .order_by(Post.created_at.desc())
+        .all()
+
+
+    )
     # print("Uploads: ",uploads)
     return render_template('posts.html',posts=posts)
 #post route
@@ -232,7 +240,7 @@ def show_image(filename):
 
 #serve images for download
 @app.route('/post/<name>',methods=['POST','GET'])
-
+@login_required
 def download_file(name):
     return send_from_directory(
         app.config['UPLOAD_FOLDER'],
@@ -340,7 +348,7 @@ def change_password():
        form.current_password.errors.append('Current password is incorrect')
        return render_template('change_password.html',form=form)
       new_password_hash=bcrypt.generate_password_hash(form.new_password.data).decode('utf-8')
-      print("New password: ",new_password_hash)
+    #   print("New password: ",new_password_hash)
       #save changes to the database
       user.password=new_password_hash
       db.session.commit()
@@ -415,7 +423,7 @@ class PostForm(FlaskForm):
 
 #login form
 class LoginForm(FlaskForm):
-    username=StringField('Username',validators=[InputRequired()])
+    username=StringField('Username',unique=True,nullable=False,validators=[InputRequired()])
     password=PasswordField('Password',validators=[InputRequired(),Length(min=8)])
     remember_me=BooleanField('Remember me')
     submit=SubmitField('Login')
@@ -423,20 +431,20 @@ class LoginForm(FlaskForm):
 #create user model
 class User(db.Model,UserMixin):
     id=db.Column(db.String(36),primary_key=True,default=lambda:str(uuid.uuid4()))
-    username=db.Column(db.String(36),nullable=False)
-    email=db.Column(db.String(50),nullable=False)
+    username=db.Column(db.String(36),nullable=False,unique=True,index=True)
+    email=db.Column(db.String(50),nullable=False,unique=True,index=True)
     password=db.Column(db.String(255),nullable=False)
 #create a database model for post table
 class Post(db.Model):
     id=db.Column(db.String(36),primary_key=True,default=lambda:str(uuid.uuid4()))
     #post title
-    title=db.Column(db.String(36),nullable=True)
+    title=db.Column(db.String(36),nullable=True,index=True)
     #content
-    content=db.Column(db.Text,nullable=True)
+    content=db.Column(db.Text,nullable=True,index=True)
     #link post to a user
     user_id=db.Column(db.Integer,db.ForeignKey('user.id'))
     #date created
-    created_at=db.Column(db.DateTime,default=datetime.utcnow)
+    created_at=db.Column(db.DateTime,default=datetime.utcnow,index=True)
     #add image
     images=db.relationship('PostImage',backref='post',lazy=True)
 #create database table for image uploaded
