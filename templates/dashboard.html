@@ -16,8 +16,17 @@
 </header>
 {% if current_user.is_authenticated%}
 <p class="mt-4 mb-4 ml-2">
-  Welcome <span class="font-semibold text-lg m-2">{{current_user.username}}</span> to your dashboard
+  Welcome
+  <span class="font-semibold text-lg m-2">{{current_user.username}}</span> to
+  your dashboard
 </p>
+<div>
+  <a
+    href="{{url_for('change_password')}}"
+    class="inline-block text-semibold m-2 hover:text-blue-400 underline cursor-pointer text-blue-400"
+    >Change Password</a
+  >
+</div>
 {%endif%} {%if posts%}
 <p><span class="m-1 font-semibold">Total posts:</span> {{posts|length}}</p>
 {%for post in posts%}

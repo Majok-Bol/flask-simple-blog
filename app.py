@@ -31,6 +31,8 @@ import os
 import hashlib
 #user uuid for user id
 import uuid 
+#use json
+from flask import jsonify
 #initialize app with flask
 app=Flask(__name__)
 #initialize app with csrf protect
@@ -320,6 +322,32 @@ def delete_post(post_id):
     db.session.commit()
     # flash("Post delete successfully","success")
     return redirect(url_for('dashboard'))
+#change password
+@app.route('/change_password',methods=['POST','GET'])
+@login_required
+def change_password():
+    form=ChangePasswordForm()
+    user=User.query.get(current_user.id)
+    user_password=user.password
+    if not user:
+      print("User not found")
+    #get current user password
+    if not user_password:
+      print("No password set for this account")
+    if form.validate_on_submit():
+      #check if passwords match
+      if not bcrypt.check_password_hash(user.password,form.current_password.data):
+       form.current_password.errors.append('Current password is incorrect')
+       return render_template('change_password.html',form=form)
+      new_password_hash=bcrypt.generate_password_hash(form.new_password.data).decode('utf-8')
+      print("New password: ",new_password_hash)
+      #save changes to the database
+      user.password=new_password_hash
+      db.session.commit()
+      flash('Password changed successfully','success')
+      return redirect(url_for('login'))
+    return render_template('change_password.html',form=form)
+
 
 #registration form
 class RegisterForm(FlaskForm):
@@ -352,6 +380,29 @@ class RegisterForm(FlaskForm):
 
         if not (has_letters and has_numbers_or_underscores):
             raise ValidationError('Password must contain atleast 1 letter,number or underscore')
+#change password form
+class ChangePasswordForm(FlaskForm):
+    current_password=PasswordField('Current password',validators=[InputRequired()])
+    new_password=PasswordField('New password',validators=[InputRequired()])
+    confirm_new_password=PasswordField('Confirm new password',validators=[InputRequired(),EqualTo('new_password')])
+    submit=SubmitField('Change Password')
+    #validate password
+    def validate_password(self,new_password):
+        #get the new password
+        password=new_password.data
+        #check if atleast 8 characters
+        if len(password)<8:
+            raise ValidationError('Password must be atleast 8 characters.')
+        #check if password contains a letter,number or underscore
+        if not re.match(r'^[A-Za-z0-9]_+$',password):
+            raise ValidationError('Password can only contain letters,numbers and underscores')
+        #check if password contains letters
+        has_letters=re.search(r'[A-Za-z]',password)
+        #check if password has numbes or underscores
+        has_numbers_or_underscores=re.search(r'[\d_]',password)
+        if not (has_letters and not has_numbers_or_underscores):
+            raise ValidationError('Password must contain atleast 1 letter,number or underscore')
+
 
 
 #form for creating post
@@ -368,7 +419,6 @@ class LoginForm(FlaskForm):
     password=PasswordField('Password',validators=[InputRequired(),Length(min=8)])
     remember_me=BooleanField('Remember me')
     submit=SubmitField('Login')
-
 
 #create user model
 class User(db.Model,UserMixin):
