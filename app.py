@@ -232,7 +232,7 @@ def create_post():
             for file in post.image.data:
             # file=post.image.data
              filename=f"{new_post.id}_{secure_filename(file.filename)}"
-             print("Filename: ",filename)
+            #  print("Filename: ",filename)
              #add to supabase
              supabase.storage.from_("post-images").upload(
              filename,
@@ -240,18 +240,19 @@ def create_post():
              {"content-type":file.content_type}
 
              )
-             image_url= supabase.storage.from_("post-images").get_public_url(filename)
-            #  image_url = res["publicUrl"]
+             image_url = supabase.storage.from_("post-images").get_public_url(filename)
 
-             post_image=PostImage(
-                    #filename
-                    image_url=image_url,
-                    post_id=new_post.id
-                )
-                #save changes in the database
+             post_image = PostImage(
+    image_url=image_url,
+    post_id=new_post.id
+)
              db.session.add(post_image)
-            #commit changes
              db.session.commit()
+
+            #     #save changes in the database
+            #  db.session.add(post_image)
+            # #commit changes
+            #  db.session.commit()
         # flash('Post created successfully','success')
         return redirect(url_for('display_posts'))
         # return render_template('create_post.html',post=post)
@@ -282,45 +283,37 @@ def edit_post(post_id):
          post.content=form.content.data
          updated=True     
         #handle image update
-        if form.image.data:
-            file=form.image.data
-            print("File: ",file)
-            filename=f"{post.id}_{secure_filename(file.filename)}"
-            print("Filename: ",filename)
-            if post.images:
-                old_image=post.images[0]
-                old_filename=extract_filename_from_url(old_image.image_url)
-                print("Old filename: ",old_filename)
-                #remove old filename
-                supabase.storage.from_("post-images").remove([old_filename])
-                #upload new image
-                supabase.storage.from_("post-images").upload(
-                    filename,
-                    file.read(),
-                    {"content-type":file.content_type}
+    if form.image.data:
+     for file in form.image.data:
+        filename = f"{post.id}_{secure_filename(file.filename)}"
 
-                )
+        if post.images:
+            old_image = post.images[0]
+            old_filename = extract_filename_from_url(old_image.image_url)
 
-                # get public URL correctly
-                old_image.image_url= supabase.storage.from_("post-images").get_public_url(filename)
-                # old_image.image_url = res["publicUrl"]
-                #update image url in the database
-                # old_image.image_url = supabase.storage.from_("post-images").get_public_url(filename)    
-            else:
+            supabase.storage.from_("post-images").remove([old_filename])
+            supabase.storage.from_("post-images").upload(
+                filename,
+                file.read(),
+                {"content-type": file.content_type}
+            )
+            image_url = supabase.storage.from_("post-images").get_public_url(filename)
+            old_image.image_url = image_url
 
-                #upload new image
-                supabase.storage.from_("post-images").upload(
-                    filename,
-                    file.read(),
-                    {"content-type":file.content_type}
-                )
-                image_url=supabase.storage.from_("post-images").get_public_url(filename)
-                new_image=PostImage(
-                    image_url=image_url,
-                    post_id=post.id
-                )
-    
-                db.session.add(new_image)
+        else:
+            supabase.storage.from_("post-images").upload(
+                filename,
+                file.read(),
+                {"content-type": file.content_type}
+            )
+            image_url = supabase.storage.from_("post-images").get_public_url(filename)
+            new_image = PostImage(
+    image_url=image_url,
+    post_id=post.id
+)
+            db.session.add(new_image)
+
+
             updated=True
         if updated:
         #save changes
