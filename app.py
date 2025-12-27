@@ -29,14 +29,25 @@ import re
 import os
 #use hashlib to hash passwords and emails
 import hashlib
-#user uuid for user id
-import uuid 
 #use json
 from flask import jsonify
 #eager load images
 from sqlalchemy.orm import joinedload
+#uuid postgresql
+from sqlalchemy.dialects.postgresql import UUID
+#user uuid for user id
+import uuid 
+#use supabase client
+from supabase import create_client
+#use flask migrate for database schema change
+from flask_migrate import Migrate
 #initialize app with flask
 app=Flask(__name__)
+#initialize app with supabase
+supabase=create_client(
+    os.getenv('SUPABASE_URL'),
+    os.getenv('SUPABASE_KEY')
+)
 #initialize app with csrf protect
 csrf=CSRFProtect()
 csrf.init_app(app)
@@ -58,6 +69,8 @@ app.config['UPLOAD_FOLDER']=os.getenv('UPLOAD_FOLDER')
 # print('Folder path: ',app.config['UPLOAD_FOLDER'])
 #initializse app with database
 db=SQLAlchemy(app)
+#initialize flask migrate
+migrate=Migrate(app,db)
 #set maximum size for image
 MAX_WIDTH=800
 MAX_HEIGHT=600
@@ -69,6 +82,10 @@ login_manager.init_app(app)
 #if user is not logged in
 login_manager.login_view='login'
 login_manager.login_message_category='info'
+#extract file path from url 
+def extract_filename_from_url(url:str) -> str:
+    return url.split("/")[-1]
+
 #handle register route
 @app.route('/register',methods=['POST','GET'])
 def register():
@@ -207,21 +224,21 @@ def create_post():
         #check if there is image uploaded
         if post.image.data:
             #get the filename
-            filename=secure_filename(post.image.data.filename)
-            #check if folder does not exist
-            if not os.path.exists(app.config['UPLOAD_FOLDER']):
-                #create folder
-                os.makedirs(app.config['UPLOAD_FOLDER'])
-            #create image path
-            image_path=os.path.join(app.config['UPLOAD_FOLDER'],filename)
-            #resize image befor saving it
-            img=Image.open(post.image.data)
-            img.thumbnail((MAX_WIDTH,MAX_HEIGHT),Image.LANCZOS)
-            img.save(image_path)
-            #create instance of image
+            # filename=secure_filename(post.image.data.filename)
+            file=post.image.data
+            filename=f"{new_post.id}_{secure_filename(file.filename)}"
+            print("Filename: ",filename)
+            #add to supabase
+            supabase.storage.from_("post-images").upload(
+            filename,
+            file.read(),
+            {"content-type":file.content_type}
+
+            )
+            image_url=supabase.storage.from_("post-images").get_public_url(filename)
             post_image=PostImage(
                     #filename
-                    filename=filename,
+                    image_url=image_url,
                     post_id=new_post.id
                 )
                 #save changes in the database
@@ -233,23 +250,6 @@ def create_post():
         # return render_template('create_post.html',post=post)
     return render_template('create_post.html',post=post,submit_label='Create post')
     
-#display images
-@app.route('/uploads/<filename>')
-def show_image(filename):
-    return send_from_directory(app.config['UPLOAD_FOLDER'], filename)
-
-#serve images for download
-@app.route('/post/<name>',methods=['POST','GET'])
-@login_required
-def download_file(name):
-    return send_from_directory(
-        app.config['UPLOAD_FOLDER'],
-        name,
-        as_attachment=True,
-        #download name same as filename
-        download_name=name
-        )
-
 #edit post
 @app.route('/edit/<string:post_id>',methods=['POST','GET'])
 @login_required
@@ -276,29 +276,45 @@ def edit_post(post_id):
          updated=True     
         #handle image update
         if form.image.data:
-            filename=secure_filename(form.image.data.filename)
-            #ensure folder exists
-            if not os.path.exists(app.config['UPLOAD_FOLDER']):
-                os.makedirs(app.config['UPLOAD_FOLDER'])
-            #get image path
-            image_path=os.path.join(app.config['UPLOAD_FOLDER'],filename)
-            #check if post has image
+            file=form.image.data
+            print("File: ",file)
+            filename=f"{post.id}_{secure_filename(file.filename)}"
+            print("Filename: ",filename)
             if post.images:
                 old_image=post.images[0]
-                #get old path
-                old_path=os.path.join(app.config['UPLOAD_FOLDER'],old_image.filename)
-                # print("Old path: ",old_path)
-                #delete old path
-                if os.path.exists(old_path):
-                    #remove it
-                    os.remove(old_path)
-                #update filename in the database
-                old_image.filename=filename
+                old_filename=extract_filename_from_url(old_image.image_url)
+                print("Old filename: ",old_filename)
+                #remove old filename
+                supabase.storage.from_("post-images").remove([old_filename])
+                #upload new image
+                supabase.storage.from_("post-images").upload(
+                    filename,
+                    file.read(),
+                    {"content-type":file.content_type}
+
+                )
+                #update image url in the database
+                old_image.image_url(
+                    supabase.storage.from_("post-images")
+                    .get_public_url(filename)
+
+
+                )
             else:
-             new_image=PostImage(filename=filename,post_id=post.id)
-             db.session.add(new_image)
-            #save path
-            form.image.data.save(image_path)
+
+                #upload new image
+                supabase.storage.from_("post-images").upload(
+                    filename,
+                    file.read(),
+                    {"content-type":file.content_type}
+                )
+                image_url=supabase.storage.from_("post-images").get_public_url(filename)
+                new_image=PostImage(
+                    image_url=image_url,
+                    post_id=post.id
+                )
+    
+                db.session.add(new_image)
             updated=True
         if updated:
         #save changes
@@ -322,9 +338,10 @@ def delete_post(post_id):
     #delete images from disk
     if post.images:
         for image in post.images:
-            path=os.path.join(app.config['UPLOAD_FOLDER'],image.filename)
-            if os.path.exists(path):
-                os.remove(path)
+            filename=extract_filename_from_url(image.image_url)
+            #delete image
+            supabase.storage.from_("post-images").remove([filename])
+          
     db.session.delete(post)
     #save changes to the database
     db.session.commit()
@@ -423,40 +440,38 @@ class PostForm(FlaskForm):
 
 #login form
 class LoginForm(FlaskForm):
-    username=StringField('Username',unique=True,nullable=False,validators=[InputRequired()])
+    username=StringField('Username',validators=[InputRequired()])
     password=PasswordField('Password',validators=[InputRequired(),Length(min=8)])
     remember_me=BooleanField('Remember me')
     submit=SubmitField('Login')
 
 #create user model
 class User(db.Model,UserMixin):
-    id=db.Column(db.String(36),primary_key=True,default=lambda:str(uuid.uuid4()))
+    __tablename__ = 'users'
+    id=db.Column(UUID(as_uuid=True),primary_key=True,default=uuid.uuid4)
     username=db.Column(db.String(36),nullable=False,unique=True,index=True)
     email=db.Column(db.String(50),nullable=False,unique=True,index=True)
     password=db.Column(db.String(255),nullable=False)
 #create a database model for post table
 class Post(db.Model):
-    id=db.Column(db.String(36),primary_key=True,default=lambda:str(uuid.uuid4()))
-    #post title
+    __tablename__='posts'
+    id=db.Column(UUID(as_uuid=True),primary_key=True,default=uuid.uuid4)    #post title
     title=db.Column(db.String(36),nullable=True,index=True)
     #content
-    content=db.Column(db.Text,nullable=True,index=True)
+    content=db.Column(db.Text)
     #link post to a user
-    user_id=db.Column(db.Integer,db.ForeignKey('user.id'))
+    user_id=db.Column(UUID(as_uuid=True),db.ForeignKey('users.id'),nullable=False)
     #date created
-    created_at=db.Column(db.DateTime,default=datetime.utcnow,index=True)
+    created_at=db.Column(db.DateTime,default=datetime.utcnow)
     #add image
-    images=db.relationship('PostImage',backref='post',lazy=True)
+    images=db.relationship('PostImage',backref='post',lazy=True,cascade=('all,delete'))
 #create database table for image uploaded
 class PostImage(db.Model):
-    id=db.Column(db.String(36),primary_key=True,default=lambda:str(uuid.uuid4()))
+    __tablename__='post_images'
+    id=db.Column(UUID(as_uuid=True),primary_key=True,default=uuid.uuid4)
     #filename for image
-    filename=db.Column(db.String(36))
+    image_url = db.Column(db.Text, nullable=False)
     #link image to the post table
-    post_id=db.Column(db.ForeignKey('post.id'))
+    post_id=db.Column(UUID(as_uuid=True),db.ForeignKey('posts.id'),nullable=False)
 if __name__=='__main__':
-    with app.app_context():
-      db.create_all()
-    #   db.drop_all()
-
     app.run(debug=True)
