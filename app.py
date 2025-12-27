@@ -22,7 +22,7 @@ from werkzeug.utils import secure_filename
 #import datetime
 from datetime import datetime
 #resize images with pillow
-from PIL import Image
+# from PIL import Image
 #import regex
 import re
 #import os
@@ -41,32 +41,29 @@ import uuid
 from supabase import create_client
 #use flask migrate for database schema change
 from flask_migrate import Migrate
+#use rate limit
+from flask_limiter import Limiter
+#get remote address
+from flask_limiter.util import get_remote_address
+load_dotenv()
 #initialize app with flask
 app=Flask(__name__)
+#initialize limiter
+limiter=Limiter(get_remote_address,app=app,default_limits=['200 per day','50 per hour'])
+SUPABASE_URL=os.getenv("SUPABASE_URL")
+SUPABASE_KEY=os.getenv("SUPABASE_KEY")
 #initialize app with supabase
-supabase=create_client(
-    os.getenv('SUPABASE_URL'),
-    os.getenv('SUPABASE_KEY')
-)
+supabase=create_client(SUPABASE_URL,SUPABASE_KEY)
+#use secret key
+app.config['SECRET_KEY']=os.getenv('SECRET_KEY')
 #initialize app with csrf protect
 csrf=CSRFProtect()
 csrf.init_app(app)
 #initialize app with bcrypt for hashing password
 bcrypt=Bcrypt(app)
-#load env files
-load_dotenv('.env')
-#use secret key
-app.config['SECRET_KEY']=os.getenv('SECRET_KEY')
-#configure database url
-app.config['SQLALCHEMY_DATABASE_URI']=os.getenv('DATABASE_URL')
-#Dont track model changes
-#if yes,app will be slow
-app.config['SQLALCHEMY_TRACK_MODIFICATIONS']=False
-#only allowed files can be uploaded
 ALLOWED_EXTENSIONS={'png','jpeg','jpg'}
-#get the folder to save uploaded files into
-app.config['UPLOAD_FOLDER']=os.getenv('UPLOAD_FOLDER')
-# print('Folder path: ',app.config['UPLOAD_FOLDER'])
+app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('DATABASE_URL')
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 #initializse app with database
 db=SQLAlchemy(app)
 #initialize flask migrate
@@ -108,6 +105,8 @@ def register():
 
 #handle login
 @app.route('/login',methods=['POST','GET'])
+#limit to 3 login attempts per minute
+@limiter.limit('5 per minute',methods=['POST','GET'])
 def login():
     form=LoginForm()
     if form.validate_on_submit():
@@ -135,7 +134,12 @@ def login():
          #redirect to the dashboard
         return redirect(url_for('dashboard'))
     return render_template('login.html',form=form)
-
+#customize failed login attempts error
+@app.errorhandler(429)
+def rate_limit_error(e):
+    flash('Too many login attempts.Please try again later','danger')
+    return redirect(url_for('login'))
+#dashboard
 @app.route('/dashboard',methods=['POST','GET'])
 @login_required
 def dashboard():
@@ -294,12 +298,7 @@ def edit_post(post_id):
 
                 )
                 #update image url in the database
-                old_image.image_url(
-                    supabase.storage.from_("post-images")
-                    .get_public_url(filename)
-
-
-                )
+                old_image.image_url = supabase.storage.from_("post-images").get_public_url(filename)    
             else:
 
                 #upload new image
