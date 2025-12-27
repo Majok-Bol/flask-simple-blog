@@ -11,7 +11,7 @@ from flask_wtf.file  import FileAllowed,FileField,FileRequired
 from flask_sqlalchemy import SQLAlchemy
 from flask_bcrypt import Bcrypt
 #import form fields 
-from wtforms import StringField,BooleanField,EmailField,PasswordField,SubmitField,TextAreaField,FileField
+from wtforms import StringField,BooleanField,EmailField,PasswordField,SubmitField,TextAreaField,FileField,MultipleFileField
 #import validators for form input
 from wtforms.validators import InputRequired,EqualTo,Email,Length,ValidationError
 from flask_wtf import FlaskForm
@@ -229,26 +229,29 @@ def create_post():
         if post.image.data:
             #get the filename
             # filename=secure_filename(post.image.data.filename)
-            file=post.image.data
-            filename=f"{new_post.id}_{secure_filename(file.filename)}"
-            print("Filename: ",filename)
-            #add to supabase
-            supabase.storage.from_("post-images").upload(
-            filename,
-            file.read(),
-            {"content-type":file.content_type}
+            for file in post.image.data:
+            # file=post.image.data
+             filename=f"{new_post.id}_{secure_filename(file.filename)}"
+             print("Filename: ",filename)
+             #add to supabase
+             supabase.storage.from_("post-images").upload(
+             filename,
+             file.read(),
+             {"content-type":file.content_type}
 
-            )
-            image_url=supabase.storage.from_("post-images").get_public_url(filename)
-            post_image=PostImage(
+             )
+             image_url= supabase.storage.from_("post-images").get_public_url(filename)
+            #  image_url = res["publicUrl"]
+
+             post_image=PostImage(
                     #filename
                     image_url=image_url,
                     post_id=new_post.id
                 )
                 #save changes in the database
-            db.session.add(post_image)
+             db.session.add(post_image)
             #commit changes
-            db.session.commit()
+             db.session.commit()
         # flash('Post created successfully','success')
         return redirect(url_for('display_posts'))
         # return render_template('create_post.html',post=post)
@@ -297,8 +300,12 @@ def edit_post(post_id):
                     {"content-type":file.content_type}
 
                 )
+
+                # get public URL correctly
+                old_image.image_url= supabase.storage.from_("post-images").get_public_url(filename)
+                # old_image.image_url = res["publicUrl"]
                 #update image url in the database
-                old_image.image_url = supabase.storage.from_("post-images").get_public_url(filename)    
+                # old_image.image_url = supabase.storage.from_("post-images").get_public_url(filename)    
             else:
 
                 #upload new image
@@ -432,7 +439,7 @@ class ChangePasswordForm(FlaskForm):
 #form for creating post
 class PostForm(FlaskForm):
     title=StringField('Title')
-    image=FileField('Image(optional)',validators=[FileAllowed(ALLOWED_EXTENSIONS,message='Only JPG or PNG images are allowed')])
+    image=MultipleFileField('Image(optional)',validators=[FileAllowed(ALLOWED_EXTENSIONS,message='Only JPG or PNG images are allowed')])
     content=TextAreaField('Content')
     submit=SubmitField('Create post')
 
@@ -449,7 +456,7 @@ class User(db.Model,UserMixin):
     __tablename__ = 'users'
     id=db.Column(UUID(as_uuid=True),primary_key=True,default=uuid.uuid4)
     username=db.Column(db.String(36),nullable=False,unique=True,index=True)
-    email=db.Column(db.String(50),nullable=False,unique=True,index=True)
+    email=db.Column(db.String(70),nullable=False,unique=True,index=True)
     password=db.Column(db.String(255),nullable=False)
 #create a database model for post table
 class Post(db.Model):

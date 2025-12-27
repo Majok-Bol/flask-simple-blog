@@ -26,13 +26,13 @@ class="cursor-pointer hover:text-blue-400 hover:underline underline"
   {%endif%} {%if post.images%} {%for image in post.images%}
 
   <img
-    src="{{ url_for('show_image', filename=image.filename) }}"
+src="{{ image.image_url }}" alt="Post image"
     alt="Post image"
-    class="block max-w-[800px] max-h-[600px] rounded-[4px] object-cover w-auto h-auto m-1"
+    class="block w-full max-w-[800px] h-auto object-contain m-1"
 
 
   />
-  <a href="{{url_for('download_file',name=image.filename)}}" download
+  <a href="{{image.image_url}}" download
     ><svg
       xmlns="http://www.w3.org/2000/svg"
       fill="none"
