@@ -1,4 +1,3 @@
-#i want blog page be like this user can enter title, in the body he/she can upload any image then can add text  after that..if title and no image then add body like text;
 from flask import Flask,render_template,url_for,redirect,flash,request,send_from_directory
 from flask_login import login_manager,login_required,LoginManager,logout_user,UserMixin,current_user,login_user
 #import register,login forms
@@ -21,8 +20,6 @@ from urllib.parse import urlparse,urljoin
 from werkzeug.utils import secure_filename
 #import datetime
 from datetime import datetime
-#resize images with pillow
-# from PIL import Image
 #import regex
 import re
 #import os
@@ -41,15 +38,9 @@ import uuid
 from supabase import create_client
 #use flask migrate for database schema change
 from flask_migrate import Migrate
-#use rate limit
-from flask_limiter import Limiter
-#get remote address
-from flask_limiter.util import get_remote_address
 load_dotenv()
 #initialize app with flask
 app=Flask(__name__)
-#initialize limiter
-limiter=Limiter(get_remote_address,app=app,default_limits=['200 per day','50 per hour'])
 SUPABASE_URL=os.getenv("SUPABASE_URL")
 SUPABASE_KEY=os.getenv("SUPABASE_KEY")
 #initialize app with supabase
@@ -68,11 +59,6 @@ app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db=SQLAlchemy(app)
 #initialize flask migrate
 migrate=Migrate(app,db)
-#set maximum size for image
-MAX_WIDTH=800
-MAX_HEIGHT=600
-#initialize login manager
-#manage user sessions
 login_manager=LoginManager()
 login_manager.init_app(app)
 #always redirect to login page
@@ -82,20 +68,16 @@ login_manager.login_message_category='info'
 #extract file path from url 
 def extract_filename_from_url(url:str) -> str:
     return url.split("/")[-1]
-
 #handle register route
 @app.route('/register',methods=['POST','GET'])
 def register():
     form=RegisterForm()
     if form.validate_on_submit():
-        #get user details
         #hash user password
         #decode as string
         hashed_password=bcrypt.generate_password_hash(form.password.data).decode('utf-8')
-        #hash email address
-        hashed_email=hashlib.sha256(form.email.data.lower().encode()).hexdigest()
         #add user to database
-        user=User(username=form.username.data,email=hashed_email,password=hashed_password)
+        user=User(username=form.username.data,email=form.email.data,password=hashed_password)
         db.session.add(user)
         db.session.commit()
         flash('Account created successfully.Please login.','success')
@@ -105,8 +87,6 @@ def register():
 
 #handle login
 @app.route('/login',methods=['POST','GET'])
-#limit to 3 login attempts per minute
-@limiter.limit('5 per minute',methods=['POST','GET'])
 def login():
     form=LoginForm()
     if form.validate_on_submit():
@@ -122,8 +102,7 @@ def login():
             return render_template('login.html',form=form)
         #login user
         #when username and password is correct
-        login_user(existing_user)
-        # flash('login successful','success')
+        login_user(existing_user, remember=form.remember_me.data)
         #check for redirect route
         next_page=request.args.get('next')
         if next_page and is_safe_url(next_page):
@@ -134,11 +113,6 @@ def login():
          #redirect to the dashboard
         return redirect(url_for('dashboard'))
     return render_template('login.html',form=form)
-#customize failed login attempts error
-@app.errorhandler(429)
-def rate_limit_error(e):
-    flash('Too many login attempts.Please try again later','danger')
-    return redirect(url_for('login'))
 #dashboard
 @app.route('/dashboard',methods=['POST','GET'])
 @login_required
@@ -174,157 +148,63 @@ def display_posts():
     #get uploads
     posts=(
         Post.query
-        .options(joinedload(Post.images))
         .order_by(Post.created_at.desc())
         .all()
-
-
     )
-    # print("Uploads: ",uploads)
     return render_template('posts.html',posts=posts)
-#post route
-@app.route('/create_post',methods=['POST','GET'])
+@app.route('/create_post', methods=['POST', 'GET'])
 @login_required
 def create_post():
-    #create instance of post form
-    post=PostForm()
-    if post.validate_on_submit():
-        title=post.title.data.strip()
-        content=post.content.data.strip()
-        has_image=bool(post.image.data)
-        #nothing is provided
-        if not title and not content and not has_image:
-          post.title.errors.append("Provide a title and content or upload an image")
-          post.content.errors.append("Provide a title and content or upload an image")
-          return render_template("create_post.html", post=post,submit_label='Create post')
-        #title is given only
-        if title and not content and not has_image:
-          post.content.errors.append("Content is required when title is provided")
-          return render_template("create_post.html", post=post,submit_label='Create post')
-        #content is given ony
-        if content and not title and not has_image:
-          post.title.errors.append("Title is required when content is provided")
-          return render_template("create_post.html", post=post,submit_label='Create post')
-        #title and image,but no content
-        if title and has_image and not content:
-          post.content.errors.append("Content is required when title is provided")
-          return render_template('create_post.html',post=post,submit_label='Create post')
-        #content and image,but no title
-        if content and has_image and not title:
-          post.content.errors.append("Content is required when title is provided")
-          return render_template('create_post.html',post=post,submit_label='Create post')
-        
-        #save first post,  image is optional
-        new_post=Post(
-            title=title if title else None,
-            content=content if content else None,
-            user_id=current_user.id
+    form = PostForm()
+    if form.validate_on_submit():
+          title = form.title.data.strip() if form.title.data else ""
+          content = form.content.data.strip() if form.content.data else ""
+          # Clear previous errors to avoid duplicates
+          form.title.errors = []
+          form.content.errors = []
+          # Add errors only once per field
+          if not title:
+            form.title.errors.append("Title is required")
+          if not content:
+            form.content.errors.append("Content is required")
+           # If there are errors, render the form
+          if form.errors:
+           return render_template("create_post.html", post=form, submit_label='Create post')
+          # Create post
+          new_post = Post(title=title, content=content, user_id=current_user.id)
+          db.session.add(new_post)
+          db.session.commit()  # commit to get post.id
+          # flash("Post created successfully.", "success")
+          return redirect(url_for('display_posts'))
+    return render_template("create_post.html", post=form, submit_label='Create post')
 
-        )
-        #add title and content to the database
-        db.session.add(new_post)
-        #save changes
-        db.session.commit()
-        #check if there is image uploaded
-        if post.image.data:
-            #get the filename
-            # filename=secure_filename(post.image.data.filename)
-            for file in post.image.data:
-            # file=post.image.data
-             filename=f"{new_post.id}_{secure_filename(file.filename)}"
-            #  print("Filename: ",filename)
-             #add to supabase
-             supabase.storage.from_("post-images").upload(
-             filename,
-             file.read(),
-             {"content-type":file.content_type}
-
-             )
-             image_url = supabase.storage.from_("post-images").get_public_url(filename)
-
-             post_image = PostImage(
-    image_url=image_url,
-    post_id=new_post.id
-)
-             db.session.add(post_image)
-             db.session.commit()
-
-            #     #save changes in the database
-            #  db.session.add(post_image)
-            # #commit changes
-            #  db.session.commit()
-        # flash('Post created successfully','success')
-        return redirect(url_for('display_posts'))
-        # return render_template('create_post.html',post=post)
-    return render_template('create_post.html',post=post,submit_label='Create post')
-    
-#edit post
-@app.route('/edit/<string:post_id>',methods=['POST','GET'])
+@app.route('/edit/<string:post_id>', methods=['POST', 'GET'])
 @login_required
 def edit_post(post_id):
-    #get the post to delete
-    post=Post.query.get_or_404(post_id)
-    if post.user_id!=current_user.id:
-        # flash('You are not allowed to edit this post','danger')
-        #redirect to dashboard
+    post = Post.query.get_or_404(post_id)
+    if post.user_id != current_user.id:
+        flash("You are not allowed to edit this post.", "danger")
         return redirect(url_for('dashboard'))
-    #if valid
-    #get the post form
-    form=PostForm()
-    #check if form is validated
+    form = PostForm()
     if form.validate_on_submit():
-        updated=False
-        #check if title changed
-        if form.title.data!=post.title:    
-         post.title=form.title.data
-         updated=True
-        #check if content changed
-        if form.content.data!=post.content:
-         post.content=form.content.data
-         updated=True     
-        #handle image update
-    if form.image.data:
-     for file in form.image.data:
-        filename = f"{post.id}_{secure_filename(file.filename)}"
-
-        if post.images:
-            old_image = post.images[0]
-            old_filename = extract_filename_from_url(old_image.image_url)
-
-            supabase.storage.from_("post-images").remove([old_filename])
-            supabase.storage.from_("post-images").upload(
-                filename,
-                file.read(),
-                {"content-type": file.content_type}
-            )
-            image_url = supabase.storage.from_("post-images").get_public_url(filename)
-            old_image.image_url = image_url
-
-        else:
-            supabase.storage.from_("post-images").upload(
-                filename,
-                file.read(),
-                {"content-type": file.content_type}
-            )
-            image_url = supabase.storage.from_("post-images").get_public_url(filename)
-            new_image = PostImage(
-    image_url=image_url,
-    post_id=post.id
-)
-            db.session.add(new_image)
-
-
-            updated=True
+        updated = False
+        # Update title/content
+        if form.title.data.strip() != (post.title or ""):
+            post.title = form.title.data.strip()
+            updated = True
+        if form.content.data.strip() != (post.content or ""):
+            post.content = form.content.data.strip()
+            updated = True
         if updated:
-        #save changes
-         db.session.commit()
-        return redirect(url_for('display_posts'))
-     #prefill the form
-    if request.method=='GET':
-        form.title.data=post.title
-        form.content.data=post.content    
-    
-    return render_template('edit_post.html',post=post,form=form,submit_label='Update post')
+            db.session.commit()
+            return redirect(url_for('display_posts'))
+
+    # Pre fill form on GET
+    if request.method == 'GET':
+        form.title.data = post.title
+        form.content.data = post.content
+
+    return render_template("edit_post.html", post=post, form=form, submit_label='Update post')
 
 #delete post
 @app.route('/delete/<string:post_id>',methods=['POST'])
@@ -334,17 +214,9 @@ def delete_post(post_id):
     post=Post.query.get_or_404(post_id)
     if post.user_id!=current_user.id:
         return redirect(url_for('dashboard'))
-    #delete images from disk
-    if post.images:
-        for image in post.images:
-            filename=extract_filename_from_url(image.image_url)
-            #delete image
-            supabase.storage.from_("post-images").remove([filename])
-          
     db.session.delete(post)
     #save changes to the database
     db.session.commit()
-    # flash("Post delete successfully","success")
     return redirect(url_for('dashboard'))
 #change password
 @app.route('/change_password',methods=['POST','GET'])
@@ -364,14 +236,12 @@ def change_password():
        form.current_password.errors.append('Current password is incorrect')
        return render_template('change_password.html',form=form)
       new_password_hash=bcrypt.generate_password_hash(form.new_password.data).decode('utf-8')
-    #   print("New password: ",new_password_hash)
       #save changes to the database
       user.password=new_password_hash
       db.session.commit()
       flash('Password changed successfully','success')
       return redirect(url_for('login'))
     return render_template('change_password.html',form=form)
-
 
 #registration form
 class RegisterForm(FlaskForm):
@@ -392,18 +262,15 @@ class RegisterForm(FlaskForm):
         email=User.query.filter_by(email=email.data).first()
         if email:
             raise ValidationError('Email already in use.Please try another email address')
-    def validate_password(self,password):
-        pwd=password.data
-        if len(pwd)<8:
-            raise ValidationError('Password must be atleast 8 characters.')
-        if not re.match(r'^[A-Za-z0-9_]+$',pwd):
-            raise ValidationError('Password can only contain letters,numbers and underscores')
-        has_letters=re.search(r'[A-Za-z]',pwd)
-      
-        has_numbers_or_underscores=re.search(r'[\d_]',pwd)
+    def validate_password(self, new_password):
+     pwd = new_password.data
+     if len(pwd) < 8:
+        raise ValidationError('Password must be at least 8 characters.')
+     if not re.match(r'^[A-Za-z0-9_]+$', pwd):
+        raise ValidationError('Password can only contain letters, numbers, and underscores.')
+     if not (re.search(r'[A-Za-z]', pwd) and re.search(r'[\d_]', pwd)):
+        raise ValidationError('Password must contain at least one letter and one number or underscore.')
 
-        if not (has_letters and has_numbers_or_underscores):
-            raise ValidationError('Password must contain atleast 1 letter,number or underscore')
 #change password form
 class ChangePasswordForm(FlaskForm):
     current_password=PasswordField('Current password',validators=[InputRequired()])
@@ -411,31 +278,21 @@ class ChangePasswordForm(FlaskForm):
     confirm_new_password=PasswordField('Confirm new password',validators=[InputRequired(),EqualTo('new_password')])
     submit=SubmitField('Change Password')
     #validate password
-    def validate_password(self,new_password):
-        #get the new password
-        password=new_password.data
-        #check if atleast 8 characters
-        if len(password)<8:
-            raise ValidationError('Password must be atleast 8 characters.')
-        #check if password contains a letter,number or underscore
-        if not re.match(r'^[A-Za-z0-9]_+$',password):
-            raise ValidationError('Password can only contain letters,numbers and underscores')
-        #check if password contains letters
-        has_letters=re.search(r'[A-Za-z]',password)
-        #check if password has numbes or underscores
-        has_numbers_or_underscores=re.search(r'[\d_]',password)
-        if not (has_letters and not has_numbers_or_underscores):
-            raise ValidationError('Password must contain atleast 1 letter,number or underscore')
+    def validate_password(self, new_password):
+     pwd = new_password.data
+     if len(pwd) < 8:
+        raise ValidationError('Password must be at least 8 characters.')
+     if not re.match(r'^[A-Za-z0-9_]+$', pwd):
+        raise ValidationError('Password can only contain letters, numbers, and underscores.')
+     if not (re.search(r'[A-Za-z]', pwd) and re.search(r'[\d_]', pwd)):
+        raise ValidationError('Password must contain at least one letter and one number or underscore.')
 
 
 
-#form for creating post
 class PostForm(FlaskForm):
-    title=StringField('Title')
-    image=MultipleFileField('Image(optional)',validators=[FileAllowed(ALLOWED_EXTENSIONS,message='Only JPG or PNG images are allowed')])
-    content=TextAreaField('Content')
-    submit=SubmitField('Create post')
-
+    title = StringField('Title')
+    content = TextAreaField('Content')
+    submit = SubmitField('Submit')
 
 #login form
 class LoginForm(FlaskForm):
@@ -462,15 +319,5 @@ class Post(db.Model):
     user_id=db.Column(UUID(as_uuid=True),db.ForeignKey('users.id'),nullable=False)
     #date created
     created_at=db.Column(db.DateTime,default=datetime.utcnow)
-    #add image
-    images=db.relationship('PostImage',backref='post',lazy=True,cascade=('all,delete'))
-#create database table for image uploaded
-class PostImage(db.Model):
-    __tablename__='post_images'
-    id=db.Column(UUID(as_uuid=True),primary_key=True,default=uuid.uuid4)
-    #filename for image
-    image_url = db.Column(db.Text, nullable=False)
-    #link image to the post table
-    post_id=db.Column(UUID(as_uuid=True),db.ForeignKey('posts.id'),nullable=False)
 if __name__=='__main__':
     app.run(debug=True)

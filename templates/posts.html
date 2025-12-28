@@ -1,58 +1,42 @@
-{%extends 'base_post.html'%}
-
-{%block body%}
+{%extends 'base_post.html'%} {%block body%}
 <header class="sticky top-0 left-0 w-full bg-gray-700 text-white z-50 p-4">
   <nav class="flex items-center gap-10">
-<div>
-<a
-  href="{{url_for('create_post')}}"
-class="cursor-pointer hover:text-blue-400 hover:underline underline"
-  >Create post</a
->
-</div>
-<div>
-  <a
-  href="{{url_for('home')}}"
-  class="cursor-pointer hover:text-blue-400 hover:underline underline"
-  >Home</a
->
-</div>
+    <div>
+      <a
+        href="{{url_for('create_post')}}"
+        class="cursor-pointer hover:text-blue-400 hover:underline "
+        >Create post</a
+      >
+    </div>
+    <div>
+      <a
+        href="{{url_for('home')}}"
+        class="cursor-pointer hover:text-blue-400 hover:underline "
+        >Home</a
+      >
+   
+    </div>
+    <div>
+         <a
+        href="{{url_for('dashboard')}}"
+        class="cursor-pointer hover:text-blue-400 hover:underline "
+        >Dashboard</a
+      >
+    </div>
   </nav>
 </header>
+<h1 class="text-blue-600 text-2xl m-2">BLOG POSTS</h1>
 {%if posts%} {%for post in posts%}
 <article>
   {%if post.title%}
   <h2 class="font-semibold text-medium uppercase m-1">{{post.title|e}}</h2>
-  {%endif%} {%if post.images%} {%for image in post.images%}
-
-  <img
-src="{{ image.image_url }}" alt="Post image"
-    alt="Post image"
-    class="block w-full max-w-[800px] h-auto object-contain m-1"
-
-
-  />
-  <a href="{{image.image_url}}" download
-    ><svg
-      xmlns="http://www.w3.org/2000/svg"
-      fill="none"
-      viewBox="0 0 24 24"
-      stroke-width="1.5"
-      stroke="currentColor"
-      class="size-6"
-    >
-      <path
-        stroke-linecap="round"
-        stroke-linejoin="round"
-        d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5M16.5 12 12 16.5m0 0L7.5 12m4.5 4.5V3"
-      />
-    </svg>
-  </a>
-
-  {%endfor%} {%endif%} {%if post.content%}
+  {%endif%} {%if post.content%}
   <div class="w-full px-1">
-  <pre class="whitespace-pre-wrap break-words font-normal leading-normal text-gray-900">{{post.content|e}}</pre>
-
+    <pre
+      class="whitespace-pre-wrap break-words font-normal leading-normal text-gray-900"
+    >
+{{post.content|e}}</pre
+    >
   </div>
 
   {%endif%}
@@ -60,8 +44,4 @@ src="{{ image.image_url }}" alt="Post image"
 {%endfor%} {%else%}
 <p class="text-gray-500">No posts uploaded yet</p>
 
-{%endif%}
-
-
-
-{%endblock%}
+{%endif%} {%endblock%}

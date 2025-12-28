@@ -20,17 +20,6 @@
         {{form.title(class='outline-none focus:outline-none focus:ring-2
         focus:ring-blue-500 border border-gray-700 mt-2 rounded-[4px] w-full')}}
       </div>
-      {%if post.images%}
-      <p>Current image:</p>
-      <img src="{{image.image_url}}"
-        />
-      <div class="m-2">
-        <span class="font-semibold m-2"> {{form.image.label}} </span>
-        {{form.image()}}
-      </div>
-      {%else%}
-      <div class="font-semibold m-2">{{form.image.label}} {{form.image()}}</div>
-      {%endif%}
       <div class="flex flex-col m-2">
         <span class="font-semibold"> {{form.content.label}} </span>
         {{form.content(class='outline-none focus:ring-2 focus:ring-blue-500

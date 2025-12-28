@@ -21,28 +21,15 @@
         mt-2')}}
         <div>
           {%if post.title.errors%}
-          <div class="min-h-[1.5rem]">
+          <div class="min-h-[1.9rem]">
             {%for error in post.title.errors%}
-            <p class="flash-msg text-red-600">{{error}}</p>
+            <p class="flash-msg text-red-600 w-full">{{error}}</p>
             {%endfor%} {%endif%}
           </div>
         </div>
       </div>
       <br />
 
-      <div>
-        <span class="font-semibold m-2"> {{post.image.label}}</span>
-        {{post.image()}}
-
-        <div>
-          {%if post.image.errors%}
-          <div class="min-h-[1.5rem]">
-            {%for error in post.image.errors%}
-            <p class="flash-msg text-red-600">{{error}}</p>
-            {%endfor%} {%endif%}
-          </div>
-        </div>
-        <br />
         <div class="flex flex-col m-2">
           <span class="font-semibold"> {{post.content.label}} </span>
           {{post.content(class='w-full min-h-[320px] focus:ring-2
@@ -50,9 +37,9 @@
           border-gray-700 mt-2')}}
           <div>
             {%if post.content.errors%}
-            <div class="min-h-[1.5rem]">
+            <div class="min-h-[1.8rem]">
               {%for error in post.content.errors%}
-              <p class="flash-msg text-red-600">{{error}}</p>
+              <p class="flash-msg text-red-600 w-full">{{error}}</p>
               {%endfor%} {%endif%}
             </div>
           </div>
